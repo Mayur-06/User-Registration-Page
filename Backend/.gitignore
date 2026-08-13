@@ -1,0 +1,8 @@
+.env
+app/data/users.json
+.venv/
+__pycache__/
+*.pyc
+.env
+app/data/*.json
+.pytest_cache/
