@@ -26,6 +26,41 @@ function LoadingCard() {
   );
 }
 
+// export default function TokenCard({ signed = false, instant = false }) {
+//   const [segments] = useState({
+//     header: randomChunk(8),
+//     payload: randomChunk(28),
+//     signature: randomChunk(14),
+//   });
+//   const [active, setActive] = useState(instant && signed ? [true, true, true] : [false, false, false]);
+
+//   useEffect(() => {
+//     if (!signed || instant) return;
+//     const timers = [
+//       setTimeout(() => setActive([true, false, false]), 80),
+//       setTimeout(() => setActive([true, true, false]), 260),
+//       setTimeout(() => setActive([true, true, true]), 440),
+//     ];
+//     return () => timers.forEach(clearTimeout);
+//   }, [signed, instant]);
+
+//   return (
+//     <div
+//       className={`flex w-full overflow-hidden rounded-xl border transition-all duration-500 ${
+//         signed && active[2]
+//           ? "border-accent-cyan/60 shadow-[0_0_24px_-4px_var(--color-accent-cyan)]"
+//           : "border-white/10"
+//       }`}
+//     >
+//       <TokenSegment label="HDR" value={segments.header} lit={active[0]} flexGrow={1} />
+//       <Divider lit={active[0]} />
+//       <TokenSegment label="PAYLOAD" value={segments.payload} lit={active[1]} flexGrow={3} />
+//       <Divider lit={active[1]} />
+//       <TokenSegment label="SIGNATURE" value={segments.signature} lit={active[2]} flexGrow={1.6} />
+//     </div>
+//   );
+// }
+
 export default function TokenCard({ signed = false, instant = false }) {
   const [segments] = useState({
     header: randomChunk(8),
@@ -44,12 +79,14 @@ export default function TokenCard({ signed = false, instant = false }) {
     return () => timers.forEach(clearTimeout);
   }, [signed, instant]);
 
+  const fullyLit = signed && active[2];
+
   return (
     <div
       className={`flex w-full overflow-hidden rounded-xl border transition-all duration-500 ${
-        signed && active[2]
+        fullyLit
           ? "border-accent-cyan/60 shadow-[0_0_24px_-4px_var(--color-accent-cyan)]"
-          : "border-white/10"
+          : "border-accent-cyan/15 shadow-[0_0_14px_-6px_var(--color-accent-cyan)]"
       }`}
     >
       <TokenSegment label="HDR" value={segments.header} lit={active[0]} flexGrow={1} />
@@ -60,7 +97,6 @@ export default function TokenCard({ signed = false, instant = false }) {
     </div>
   );
 }
-
 
 //components
 
