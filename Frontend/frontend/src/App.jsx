@@ -1,25 +1,40 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-// import SignupPage from "./pages/SignupPage";
-// import LoginPage from "./pages/LoginPage";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import LandingPage from "./pages/LandingPage";
 import ProfilePage from "./pages/ProfilePage";
+import ChatPage from "./pages/ChatPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthPage from "./pages/AuthPage";
+import PageTransition from "./components/PageTransition";
 
 const App = () => {
+  const location = useLocation();
+
   return (
-    <Routes>
-      <Route path="/login" element={<AuthPage />} />
-      <Route path="/signup" element={<AuthPage />} />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<PageTransition><LandingPage /></PageTransition>} />
+        <Route path="/login" element={<PageTransition><AuthPage /></PageTransition>} />
+        <Route path="/signup" element={<PageTransition><AuthPage /></PageTransition>} />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <PageTransition><ProfilePage /></PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <PageTransition><ChatPage /></PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AnimatePresence>
   );
 };
 

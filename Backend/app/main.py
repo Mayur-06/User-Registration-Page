@@ -1,12 +1,13 @@
 from fastapi import FastAPI
 from app.routes import health, auth_routes, user
-
+from app.routes import documents
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 app.include_router(health.router)
 app.include_router(auth_routes.router)
 app.include_router(user.router)
+app.include_router(documents.router)
 
 app.add_middleware(
     CORSMiddleware,
