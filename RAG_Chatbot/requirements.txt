@@ -1,0 +1,16 @@
+sentence-transformers
+transformers
+torch
+accelerate
+faiss-cpu
+google-genai
+google-generativeai
+python-dotenv
+fastapi
+
+uvicorn
+python-multipart
+python-jose[cryptography]
+sqlalchemy
+asyncpg
+alembic
