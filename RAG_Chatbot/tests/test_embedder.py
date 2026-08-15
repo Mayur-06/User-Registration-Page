@@ -1,4 +1,4 @@
-from embedder import Embedder
+from Backend.app.rag.embedder import Embedder
 
 embedder = Embedder()
 

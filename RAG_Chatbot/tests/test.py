@@ -1,4 +1,4 @@
-from generator import Generator
+from Backend.app.rag.generator import Generator
 
 generator = Generator()
 

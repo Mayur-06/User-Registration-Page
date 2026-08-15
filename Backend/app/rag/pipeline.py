@@ -1,8 +1,8 @@
-from embedder import Embedder
+from app.rag.embedder import Embedder
 # from search_index import SearchIndex
-from generator import Generator
-from textchunker import TextChunker
-from faiss_manager import FAISSManager
+from app.rag.generator import Generator
+from app.rag.textchunker import TextChunker
+from app.rag.faiss_manager import FAISSManager
 
 class RAGPipeline:
 

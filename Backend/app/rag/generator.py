@@ -1,4 +1,4 @@
-from providers.gemini import Gemini
+from app.rag.providers.gemini import Gemini
 # from providers.openai import OpenAIProvider
 # from providers.groq import GroqProvider
 # from providers.claude import ClaudeProvider

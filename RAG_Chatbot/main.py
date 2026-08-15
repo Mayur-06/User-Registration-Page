@@ -8,13 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 import shutil
 
-from pipeline import RAGPipeline
-from textchunker import TextChunker
-from faiss_manager import FAISSManager
-from embedder import Embedder
-from document_loader import DocumentLoader
-from generator import Generator
-from models import ChatRequest, ChatResponse, HealthResponse
+from Backend.app.rag.pipeline import RAGPipeline
+from Backend.app.rag.textchunker import TextChunker
+from Backend.app.rag.faiss_manager import FAISSManager
+from Backend.app.rag.embedder import Embedder
+from Backend.app.rag.document_loader import DocumentLoader
+from Backend.app.rag.generator import Generator
+from Backend.app.rag.rag_models import ChatRequest, ChatResponse, HealthResponse
 from auth import get_current_user_id
 
 rag = None

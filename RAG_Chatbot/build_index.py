@@ -3,7 +3,7 @@ import json
 import faiss
 import numpy as np
 
-from embedder import Embedder
+from Backend.app.rag.embedder import Embedder
 
 embedder = Embedder()
 
