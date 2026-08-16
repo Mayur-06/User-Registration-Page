@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/context/ThemeContext";
-
+import logoImg from "@/assets/logo.png";
 const links = [
   { label: "Features", id: "features" },
   { label: "Pricing", id: "pricing" },
@@ -16,7 +16,11 @@ export default function Navbar() {
   }
     return (
     <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-border bg-bg-panel/80 px-8 py-4 backdrop-blur-md">
-      <div className="font-display text-lg font-bold text-text-primary">LucyChat</div>
+
+      <div className="flex items-center gap-2">
+      <img src={logoImg} alt="Logo" className="h-8 w-8 rounded-lg" />
+      <span className="font-display text-lg font-bold text-text-primary">LucyChat</span>
+    </div>
 
       <div className="hidden items-center gap-8 md:flex">
         {links.map((l) => (

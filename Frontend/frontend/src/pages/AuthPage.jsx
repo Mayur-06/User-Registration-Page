@@ -198,7 +198,7 @@ import ValidatedField from "@/components/ValidatedField";
 import { validators } from "@/lib/validators";
 import { login, signup } from "../api/auth";
 import { useTheme } from "@/context/ThemeContext";
-
+import logoImg from "@/assets/logo.png";
 import { Link } from "react-router-dom";
 
 import { motion } from "framer-motion";

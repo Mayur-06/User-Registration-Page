@@ -1,6 +1,9 @@
 import FloatingRobot from "@/components/FloatingRobot";
+import { useNavigate } from "react-router-dom";
+
 
 export default function Hero() {
+  const navigate = useNavigate();
   return (
     <section className="bg-gradient-to-br from-brand to-accent-violet px-8 py-20">
       <div className="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
@@ -11,7 +14,7 @@ export default function Hero() {
           <p className="mt-5 max-w-md text-white/85">
             Say goodbye to long wait times and repetitive questions. Get instant, tailored answers whenever you need them.
           </p>
-          <button className="mt-8 rounded-full bg-white px-6 py-3 text-sm font-semibold text-brand hover:bg-white/90">
+          <button onClick={() => navigate("/signup")} className="mt-8 rounded-full bg-white px-6 py-3 text-sm font-semibold text-brand hover:bg-white/90">
             Get Started Free
           </button>
         </div>

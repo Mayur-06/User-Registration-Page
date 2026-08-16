@@ -1,5 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 import uuid
+from datetime import datetime
+
 class SignupRequest(BaseModel):
     name: str = Field(min_length=1)
     age: int = Field(gt=0, lt=120)
@@ -24,5 +26,23 @@ class UserResponse(BaseModel):
 
 class DeleteRequest(BaseModel):
     password: str
+
+class ConversationResponse(BaseModel):
+    id: uuid.UUID
+    title: str
+    created_at: datetime
+    model_config = {"from_attributes": True}
+
+
+class MessageResponse(BaseModel):
+    id: uuid.UUID
+    role: str
+    text: str
+    created_at: datetime
+    model_config = {"from_attributes": True}
+
+
+class CreateConversationRequest(BaseModel):
+    title: str | None = None
 
 
