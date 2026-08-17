@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "@/context/ThemeContext";
+import logoImg from "@/assets/logo.png";
 
 export default function AppShell({ children, title, subtitle }) {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ export default function AppShell({ children, title, subtitle }) {
         {/* Icon sidebar */}
         <aside className="flex w-16 shrink-0 flex-col items-center justify-between border-r border-border py-6">
             <div className="flex flex-col items-center gap-6">
-                <div className="mb-2 h-9 w-9 rounded-lg bg-brand" />
+                <img src={logoImg} alt="Logo" className="mb-2 h-9 w-9 rounded-lg object-contain" />
                 <SidebarIcon
                 active={location.pathname === "/profile"}
                 label="Profile"

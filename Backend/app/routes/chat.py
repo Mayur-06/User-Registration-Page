@@ -1,7 +1,8 @@
 from pathlib import Path
+import uuid 
 import shutil
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
-
+from pydantic import BaseModel
 from app.rag.pipeline import RAGPipeline
 from app.rag.textchunker import TextChunker
 from app.rag.faiss_manager import FAISSManager
@@ -10,6 +11,9 @@ from app.rag.generator import Generator
 from app.rag.document_loader import DocumentLoader
 from app.rag.rag_models import ChatRequest, ChatResponse
 from app.routes.user import get_current_user_id  # wherever you settled this after the earlier cleanup
+from app.crud import add_message, get_conversation
+from app.db import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 
@@ -19,6 +23,10 @@ _shared = {
     "embedder": Embedder(),
     "generator": Generator(),
 }
+
+class ChatRequestWithConvo(BaseModel):
+    question: str
+    conversation_id: uuid.UUID
 
 
 def get_rag_for_user(user_id: str) -> RAGPipeline:
@@ -31,12 +39,30 @@ def get_rag_for_user(user_id: str) -> RAGPipeline:
     )
 
 
+# @router.post("/chat", response_model=ChatResponse)
+# def chat(request: ChatRequest, user_id: str = Depends(get_current_user_id)):
+#     rag = get_rag_for_user(user_id)
+#     answer = rag.ask(question=request.question)
+#     return ChatResponse(answer=answer)
+
 @router.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest, user_id: str = Depends(get_current_user_id)):
+async def chat(
+    request: ChatRequestWithConvo,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    convo = await get_conversation(db, request.conversation_id, uuid.UUID(user_id))
+    if not convo:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    await add_message(db, request.conversation_id, "user", request.question)
+
     rag = get_rag_for_user(user_id)
     answer = rag.ask(question=request.question)
-    return ChatResponse(answer=answer)
 
+    await add_message(db, request.conversation_id, "bot", answer)
+
+    return ChatResponse(answer=answer)
 
 @router.post("/documents/upload")
 async def upload_document(file: UploadFile = File(...), user_id: str = Depends(get_current_user_id)):
@@ -52,6 +78,11 @@ async def upload_document(file: UploadFile = File(...), user_id: str = Depends(g
 
     rag = get_rag_for_user(user_id)
     chunks = rag.chunker.chunk_text(document)
+    if not chunks:
+        raise HTTPException(
+            status_code=400,
+            detail="Could not extract any text from this document. It may be a scanned image or empty file.",
+        )
     rag.faiss_manager.add_document(file.filename, chunks)
 
     return {"message": "Document uploaded successfully", "filename": file.filename, "chunks": len(chunks)}

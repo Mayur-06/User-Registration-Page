@@ -26,12 +26,17 @@ async function tryRefresh() {
 
 async function request(path, options = {}, isRetry = false) {
   const token = localStorage.getItem("access_token");
-
+  const isFormData = options.body instanceof FormData;
+  // const headers = {
+  //   "Content-Type": "application/json",
+  //   ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  //   ...options.headers,
+  // };
   const headers = {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...options.headers,
-  };
+  ...(isFormData ? {} : { "Content-Type": "application/json" }),
+  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  ...options.headers,
+};
 
   const response = await fetch(`${BASE_URL}${path}`, {
     ...options,

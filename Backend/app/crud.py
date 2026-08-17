@@ -24,6 +24,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db_models import User, RefreshToken
 from datetime import datetime, timedelta, timezone
+from app.db_models import Conversation, Message
+from sqlalchemy import func
 
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None : 
     result = await db.execute(select(User).where(User.email == email))
@@ -68,3 +70,51 @@ async def get_valid_refresh_token(db, token_hash: str):
 async def revoke_refresh_token(db, rt: RefreshToken):
     rt.revoked = True
     await db.commit()
+
+async def create_conversation(db: AsyncSession, user_id: uuid.UUID, title: str | None = None) -> Conversation:
+    if title is None:
+        result = await db.execute(
+            select(func.count()).select_from(Conversation).where(Conversation.user_id == user_id)
+        )
+        count = result.scalar_one()
+        title = f"Untitled-{count + 1}"
+
+    convo = Conversation(user_id=user_id, title=title)
+    db.add(convo)
+    await db.commit()
+    await db.refresh(convo)
+    return convo
+
+
+async def get_conversations(db: AsyncSession, user_id: uuid.UUID) -> list[Conversation]:
+    result = await db.execute(
+        select(Conversation).where(Conversation.user_id == user_id).order_by(Conversation.created_at.desc())
+    )
+    return result.scalars().all()
+
+
+async def get_conversation(db: AsyncSession, conversation_id: uuid.UUID, user_id: uuid.UUID) -> Conversation | None:
+    result = await db.execute(
+        select(Conversation).where(Conversation.id == conversation_id, Conversation.user_id == user_id)
+    )
+    return result.scalar_one_or_none()
+
+
+async def delete_conversation(db: AsyncSession, convo: Conversation) -> None:
+    await db.delete(convo)
+    await db.commit()
+
+
+async def add_message(db: AsyncSession, conversation_id: uuid.UUID, role: str, text: str) -> Message:
+    msg = Message(conversation_id=conversation_id, role=role, text=text)
+    db.add(msg)
+    await db.commit()
+    await db.refresh(msg)
+    return msg
+
+
+async def get_messages(db: AsyncSession, conversation_id: uuid.UUID) -> list[Message]:
+    result = await db.execute(
+        select(Message).where(Message.conversation_id == conversation_id).order_by(Message.created_at.asc())
+    )
+    return result.scalars().all()
