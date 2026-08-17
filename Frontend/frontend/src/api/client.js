@@ -1,4 +1,6 @@
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+// const BASE_URL= " https://199e-49-36-186-18.ngrok-free.app" 
 
 const AUTH_ENDPOINTS = ["/login", "/signup", "/refresh", "/logout"];
 

@@ -39,18 +39,18 @@ export default function AppShell({ children, title, subtitle }) {
 
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Top bar */}
-          <header className="flex shrink-0 items-center justify-between border-b border-border px-8 py-4">
-            <div>
-              <h1 className="font-display text-lg font-semibold text-text-primary">{title}</h1>
-              {subtitle && <p className="text-xs text-text-muted">{subtitle}</p>}
-            </div>
-            <div className="flex items-center gap-4">
-              {/* <div className="rounded-lg border border-border bg-bg-page px-3 py-1.5 text-sm text-text-faint">
-                Search
-              </div> */}
-              {/* <div className="h-9 w-9 rounded-full bg-brand/10" /> */}
-            </div>
-          </header>
+          <header className="flex shrink-0 items-center justify-between border-b border-border px-4 py-4 sm:px-8">
+              <div>
+                <h1 className="font-display text-base font-semibold text-text-primary sm:text-lg">{title}</h1>
+                {subtitle && <p className="text-xs text-text-muted">{subtitle}</p>}
+              </div>
+              <div className="flex items-center gap-2 sm:gap-4">
+                {/* <div className="hidden rounded-lg border border-border bg-bg-page px-3 py-1.5 text-sm text-text-faint sm:block">
+                  Search
+                </div> */}
+                {/* <div className="h-9 w-9 rounded-full bg-brand/10" /> */}
+              </div>
+            </header>
 
           {/* Page content */}
           <main className="flex-1 overflow-y-auto">{children}</main>

@@ -22,6 +22,7 @@ export default function ChatPage() {
   const [docError, setDocError] = useState("");
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     initConversations();
@@ -131,8 +132,10 @@ export default function ChatPage() {
 
   return (
     <AppShell title="Chat" subtitle="Ask anything">
-      <div className="flex h-full">
-        <aside className="flex w-64 shrink-0 flex-col border-r border-border p-4">
+      <div className="relative flex h-full">
+        <aside className={`absolute inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col border-r border-border bg-bg-panel p-4 transition-transform md:relative md:translate-x-0 ${
+    sidebarOpen ? "translate-x-0" : "-translate-x-full"
+  }`}>
           <button onClick={handleNew} className="mb-4 w-full rounded-lg bg-brand px-3 py-2 text-sm font-medium text-white hover:bg-brand-dark">
             + New conversation
           </button>
@@ -143,18 +146,22 @@ export default function ChatPage() {
             ) : (
               conversations.map((c, i) => (
                 <motion.div key={c.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }} className="group relative">
-                  <button
-                    onClick={() => selectConversation(c.id)}
-                    className={`w-full truncate rounded-lg px-3 py-2 text-left text-[13px] transition-colors ${
-                      activeId === c.id ? "bg-brand/10 text-brand font-medium" : "text-text-muted hover:bg-bg-muted"
-                    }`}
-                  >
-                    {c.title}
-                  </button>
-                  <button onClick={() => handleDeleteConvo(c.id)} className="absolute right-2 top-1/2 hidden -translate-y-1/2 text-text-faint hover:text-error group-hover:block" title="Delete">
-                    ✕
-                  </button>
-                </motion.div>
+                      <button
+                        onClick={() => selectConversation(c.id)}
+                        className={`w-full truncate rounded-lg px-3 py-2 text-left text-[13px] transition-colors ${
+                          activeId === c.id ? "bg-brand/10 text-brand font-medium" : "text-text-muted hover:bg-bg-muted"
+                        }`}
+                      >
+                        {c.title}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteConvo(c.id)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-text-faint hover:text-error md:hidden md:group-hover:block"
+                        title="Delete"
+                      >
+                        ✕
+                      </button>
+                    </motion.div>
               ))
             )}
           </div>
@@ -175,15 +182,24 @@ export default function ChatPage() {
                 documents.map((name) => (
                   <div key={name} className="group flex items-center justify-between rounded-lg px-2 py-1.5 text-[12px] text-text-muted hover:bg-bg-muted">
                     <span className="truncate">{name}</span>
-                    <button onClick={() => handleDeleteDoc(name)} className="hidden text-text-faint hover:text-error group-hover:block" title="Delete">✕</button>
+                    <button onClick={() => handleDeleteDoc(name)} className="text-text-faint hover:text-error md:hidden md:group-hover:block" title="Delete">✕</button>
                   </div>
                 ))
               )}
             </div>
           </div>
         </aside>
+        {sidebarOpen && (
+  <div onClick={() => setSidebarOpen(false)} className="absolute inset-0 z-30 bg-black/30 md:hidden" />
+)}
 
         <div className="flex flex-1 flex-col">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="m-2 flex items-center gap-2 self-start rounded-lg border border-border px-3 py-1.5 text-sm text-text-muted md:hidden"
+          >
+            ☰ Conversations
+          </button>
           <div className="flex-1 overflow-y-auto p-6">
             {messages.length === 0 ? (
               <div className="flex h-full items-center justify-center text-sm text-text-faint">Start a conversation</div>
@@ -199,6 +215,7 @@ export default function ChatPage() {
                   </div>
                 ))}
                 {sending && (
+                  
                   <div className="mr-auto flex items-center gap-1 rounded-2xl bg-bg-muted px-4 py-2 text-sm text-text-faint">
                     <span className="animate-pulse">●</span>
                     <span className="animate-pulse [animation-delay:0.15s]">●</span>

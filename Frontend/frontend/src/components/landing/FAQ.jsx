@@ -1,14 +1,14 @@
 import { useState } from "react";
 
 const faqs = [
-  { q: "What is LucyChat?", a: "An AI-powered conversational assistant that helps answer questions instantly based on you document." },
+  { q: "What is LucyChat?", a: "An AI-powered conversational assistant that helps answer questions instantly based on your document." },
   { q: "How is data security ensured?", a: "All data is encrypted in transit and at rest, with strict access controls." },
   { q: "How does the AI learn?", a: "The assistant improves through continuous refinement based on real interactions." },
-  { q: "What are the benefits for my business?", a: "Faster response times, lower support costs, and 24/7 availability." },
+  { q: "What are the benefits?", a: "Faster response times, lower support costs, and 24/7 availability." },
 ];
 
 export default function FAQ() {
-  const [open, setOpen] = useState(0);
+  const [open, setOpen] = useState(-1);
 
   return (
     <section id="faq" className="px-8 py-20">
@@ -31,7 +31,7 @@ export default function FAQ() {
           ))}
         </div>
 
-        <div className="mt-16 flex flex-col items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-brand to-accent-violet p-8 text-center text-white md:flex-row md:text-left">
+        {/* <div className="mt-16 flex flex-col items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-brand to-accent-violet p-8 text-center text-white md:flex-row md:text-left">
           <div>
             <h3 className="font-display text-xl font-semibold">Start with a 14-Day Free Trial</h3>
             <p className="mt-1 text-sm text-white/80">Try it out before committing to a plan.</p>
@@ -39,7 +39,7 @@ export default function FAQ() {
           <button className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-brand hover:bg-white/90">
             Get Started Now
           </button>
-        </div>
+        </div> */}
       </div>
     </section>
   );

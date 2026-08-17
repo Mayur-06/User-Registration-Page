@@ -151,3 +151,28 @@ body::-webkit-scrollbar, .custom-scrollbar::-webkit-scrollbar {
   height: 6px;
 }
 /* ...same track/thumb rules, just add body:: alongside .custom-scrollbar:: for each */
+
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+section[id] {
+  scroll-margin-top: 80x;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+  background-color: var(--bg-panel) !important;
+  color: var(--text-primary) !important;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}

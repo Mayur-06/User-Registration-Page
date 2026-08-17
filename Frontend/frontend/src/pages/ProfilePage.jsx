@@ -403,7 +403,7 @@ export default function ProfilePage() {
 
 
                 {/* Field grid — 2 columns, matching reference */}
-                <div className="mb-8 grid grid-cols-2 gap-x-10 gap-y-5">
+                <div className="mb-8 grid grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2">
                   <ReadField label="Full Name" value={user.name} />
                   <ReadField label="Age" value={user.age} />
                   <ReadField label="Occupation" value={user.occupation} />
@@ -412,11 +412,14 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Session + actions footer */}
-                <div className="flex items-center justify-between border-t border-border pt-5">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-success" />
-                    <span className="text-[12px] font-medium text-text-muted">Active session</span>
-                  </div>
+                
+                <div className="mt-8 border-t border-border" />
+
+                  <div className="mt-8 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-success" />
+                      <span className="text-[12px] font-medium text-text-muted">Active session</span>
+                    </div>
 
                   <div className="flex gap-2.5">
                     <Button onClick={handleLogout} variant="outline" className="rounded-lg border-border text-text-primary hover:bg-bg-muted">
