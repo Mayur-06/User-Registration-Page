@@ -6,13 +6,13 @@ from jose import JWTError, jwt
 
 #from app.auth import verify_password
 #from pydantic import BaseModel
-from app.models import DeleteRequest, UserResponse
+from app.models import DeleteRequest, UserResponse, UpdateUserRequest
 import os
 import uuid
 
 
 from app.db import get_db
-from app.crud import get_user_by_email, create_user, get_user_by_id, delete_user
+from app.crud import get_user_by_email, create_user, get_user_by_id, delete_user, update_user
 
 
 
@@ -42,6 +42,20 @@ async def get_me(
     user = await get_user_by_id(db, uuid.UUID(user_id))
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@router.patch("/me", response_model=UserResponse)
+async def update_me(
+    payload: UpdateUserRequest,
+    user_id: str = Depends(get_current_user_id),
+    db: AsyncSession = Depends(get_db),
+):
+    user = await get_user_by_id(db, uuid.UUID(user_id))
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    update_data = payload.model_dump(exclude_unset=True)
+    user = await update_user(db, user, **update_data)
     return user
 
 # @router.delete("/me")

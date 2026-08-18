@@ -32,7 +32,7 @@ services:
 
   frontend:
     build:
-      context: ./Frontend/frontend
+      context: ./Frontend-1
       dockerfile: Dockerfile
       args:
         VITE_API_URL: http://localhost:8000

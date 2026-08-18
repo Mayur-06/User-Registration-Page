@@ -46,3 +46,10 @@ class CreateConversationRequest(BaseModel):
     title: str | None = None
 
 
+class UpdateUserRequest(BaseModel):
+    name: str | None = None
+    age: int | None = Field(default=None, gt=0, lt=120)
+    occupation: str | None = None
+    education_qualification: str | None = None
+
+

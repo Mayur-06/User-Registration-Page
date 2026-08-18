@@ -17,24 +17,26 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 
-# Shared, stateless components — built once
-_shared = {
-    "chunker": TextChunker(),
-    "embedder": Embedder(),
-    "generator": Generator(),
-}
+# Shared, stateless components — lazy loaded on first RAG request
+_shared = {}
 
-class ChatRequestWithConvo(BaseModel):
-    question: str
-    conversation_id: uuid.UUID
+def get_shared_components():
+    if "chunker" not in _shared:
+        _shared["chunker"] = TextChunker()
+    if "embedder" not in _shared:
+        _shared["embedder"] = Embedder()
+    if "generator" not in _shared:
+        _shared["generator"] = Generator()
+    return _shared
 
 
 def get_rag_for_user(user_id: str) -> RAGPipeline:
-    faiss_manager = FAISSManager(_shared["embedder"], user_id=user_id)
+    shared = get_shared_components()
+    faiss_manager = FAISSManager(shared["embedder"], user_id=user_id)
     return RAGPipeline(
-        chunker=_shared["chunker"],
-        embedder=_shared["embedder"],
-        generator=_shared["generator"],
+        chunker=shared["chunker"],
+        embedder=shared["embedder"],
+        generator=shared["generator"],
         faiss_manager=faiss_manager,
     )
 
@@ -44,6 +46,11 @@ def get_rag_for_user(user_id: str) -> RAGPipeline:
 #     rag = get_rag_for_user(user_id)
 #     answer = rag.ask(question=request.question)
 #     return ChatResponse(answer=answer)
+
+class ChatRequestWithConvo(BaseModel):
+    question: str
+    conversation_id: uuid.UUID
+
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
