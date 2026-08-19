@@ -9,7 +9,7 @@ module.exports = {
     },
     {
       name: "frontend",
-      cwd: "./Frontend/frontend",
+      cwd: "./Frontend-1",
       script: "cmd",
       args: '/c "npm run dev"',
       interpreter: "none",

@@ -185,7 +185,7 @@ export const ProfilePage = ({
   const docsPercent = Math.min(100, Math.round((docsUploaded / docsTotal) * 100));
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] font-sans antialiased selection:bg-[#38bdf8]/20 selection:text-[#38bdf8]">
+    <div className="min-h-screen bg-background text-on-background font-sans antialiased selection:bg-primary-container/20 selection:text-primary-container">
       {/* Hidden File Input for Avatar upload */}
       <input
         type="file"
@@ -196,18 +196,18 @@ export const ProfilePage = ({
       />
 
       {/* ==================== TOP NAVIGATION HEADER ==================== */}
-      <header className="sticky top-0 z-30 w-full bg-[#09090b]/90 backdrop-blur-md border-b border-[#1e293b]">
+      <header className="sticky top-0 z-30 w-full bg-header backdrop-blur-md border-b border-outline-variant">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => onNavigate('chat')}
-              className="inline-flex items-center gap-2 text-xs font-mono text-[#94a3b8] hover:text-[#38bdf8] transition-colors py-1.5 px-2.5 rounded-lg hover:bg-[#1e293b]/50 cursor-pointer"
+              className="inline-flex items-center gap-2 text-xs font-mono text-on-surface-variant hover:text-primary-container transition-colors py-1.5 px-2.5 rounded-lg hover:bg-surface-container/50 cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Chat</span>
             </button>
 
-            <div className="h-4 w-px bg-[#1e293b] hidden sm:block" />
+            <div className="h-4 w-px bg-outline-variant hidden sm:block" />
 
             <div className="hidden sm:block">
               <Logo size="sm" onClick={() => onNavigate('home')} />
@@ -218,7 +218,7 @@ export const ProfilePage = ({
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#111827] border border-[#1e293b] hover:border-rose-400/60 text-xs font-medium text-[#f8fafc] transition-all cursor-pointer shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container border border-outline-variant hover:border-rose-400/60 text-xs font-medium text-on-background transition-all cursor-pointer shadow-sm"
             >
               <LogOut className="w-3.5 h-3.5 text-rose-300" />
               <span>Logout</span>
@@ -232,12 +232,12 @@ export const ProfilePage = ({
         {/* Page Header */}
         <div className="space-y-1.5 pb-2">
           <h1
-            className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#f8fafc]"
+            className="text-2xl sm:text-3xl font-extrabold tracking-tight text-on-background"
             style={{ fontFamily: 'Sora, sans-serif' }}
           >
             User Profile
           </h1>
-          <p className="text-sm text-[#94a3b8] leading-relaxed">
+          <p className="text-sm text-on-surface-variant leading-relaxed">
             Manage your personal profile, credentials, and workspace preferences stored in your backend database.
           </p>
         </div>
@@ -273,7 +273,7 @@ export const ProfilePage = ({
         )}
 
         {/* ==================== CARD 1: IDENTITY OVERVIEW ==================== */}
-        <section className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-6 sm:p-7 shadow-lg">
+        <section className="bg-surface-container border border-outline-variant rounded-2xl p-6 sm:p-7 shadow-lg">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
             <div className="flex items-center gap-4">
               <div className="relative group shrink-0">
@@ -281,17 +281,17 @@ export const ProfilePage = ({
                   <img
                     src={avatarUrl}
                     alt={fullName || 'User'}
-                    className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-[#1e293b] group-hover:border-[#38bdf8]/60 transition-colors shadow-md"
+                    className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-outline-variant group-hover:border-primary-container/60 transition-colors shadow-md"
                   />
                 ) : (
-                  <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-[#1e293b] flex items-center justify-center font-mono font-bold text-xl text-[#38bdf8] border-2 border-[#1e293b]">
+                  <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-surface-container-high flex items-center justify-center font-mono font-bold text-xl text-primary-container border-2 border-outline-variant">
                     {initials}
                   </div>
                 )}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute inset-0 rounded-2xl bg-[#000]/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[#38bdf8] cursor-pointer"
+                  className="absolute inset-0 rounded-2xl bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-primary-container cursor-pointer"
                   title="Upload photo"
                 >
                   <Camera className="w-5 h-5" />
@@ -300,29 +300,29 @@ export const ProfilePage = ({
 
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <h2 className="text-lg sm:text-xl font-bold text-[#f8fafc]">{fullName || 'User Profile'}</h2>
+                  <h2 className="text-lg sm:text-xl font-bold text-on-background">{fullName || 'User Profile'}</h2>
                   {age ? (
-                    <span className="px-2 py-0.5 rounded-full bg-[#1e293b] text-[#38bdf8] text-[11px] font-mono border border-[#334155]">
+                    <span className="px-2 py-0.5 rounded-full bg-surface-container-high text-primary-container text-[11px] font-mono border border-outline">
                       {age} yrs
                     </span>
                   ) : null}
                 </div>
-                <div className="flex items-center gap-2 text-xs text-[#94a3b8] flex-wrap">
+                <div className="flex items-center gap-2 text-xs text-on-surface-variant flex-wrap">
                   {occupation && (
-                    <span className="flex items-center gap-1 text-[#38bdf8]">
+                    <span className="flex items-center gap-1 text-primary-container">
                       <Briefcase className="w-3.5 h-3.5" />
                       <span>{occupation}</span>
                     </span>
                   )}
                   {occupation && educationQualification && <span>•</span>}
                   {educationQualification && (
-                    <span className="flex items-center gap-1 text-[#94a3b8]">
-                      <GraduationCap className="w-3.5 h-3.5 text-[#2fd9f4]" />
+                    <span className="flex items-center gap-1 text-on-surface-variant">
+                      <GraduationCap className="w-3.5 h-3.5 text-secondary" />
                       <span>{educationQualification}</span>
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-[#64748b] font-mono">{emailAddress}</p>
+                <p className="text-[11px] text-slate-500 font-mono">{emailAddress}</p>
               </div>
             </div>
 
@@ -330,7 +330,7 @@ export const ProfilePage = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="px-3.5 py-1.5 rounded-xl bg-[#121c2c] hover:bg-[#1a293f] text-xs font-semibold text-[#f8fafc] border border-[#1e293b] hover:border-[#38bdf8]/40 transition-all cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-surface-variant hover:bg-surface-container-high text-xs font-semibold text-on-background border border-outline-variant hover:border-primary-container/40 transition-all cursor-pointer"
               >
                 Change Photo
               </button>
@@ -339,10 +339,10 @@ export const ProfilePage = ({
         </section>
 
         {/* ==================== CARD 2: PROFILE DETAILS EDIT FORM ==================== */}
-        <section className="bg-[#0b0f17] border border-[#1e293b] rounded-2xl p-6 sm:p-7 shadow-lg space-y-6">
-          <div className="border-b border-[#1e293b] pb-4">
-            <h2 className="text-base font-bold text-[#f8fafc]">Profile Information</h2>
-            <p className="text-xs text-[#94a3b8] mt-0.5">
+        <section className="bg-surface-container border border-outline-variant rounded-2xl p-6 sm:p-7 shadow-lg space-y-6">
+          <div className="border-b border-outline-variant pb-4">
+            <h2 className="text-base font-bold text-on-background">Profile Information</h2>
+            <p className="text-xs text-on-surface-variant mt-0.5">
               Edit your name, occupation, education qualification, and age. Updates are synced directly to PostgreSQL.
             </p>
           </div>

@@ -41,20 +41,20 @@ export const FAQSection = () => {
     <section id="faq" className="py-24 px-4 md:px-10 max-w-[1440px] mx-auto text-center scroll-mt-20">
       {/* Section Badge & Title */}
       <div className="max-w-3xl mx-auto mb-14 space-y-4">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#08101d] border border-[#38bdf8]/40 shadow-[0_0_15px_rgba(56,189,248,0.2)]">
-          <HelpCircle className="w-3.5 h-3.5 text-[#38bdf8]" />
-          <span className="font-mono text-xs font-bold text-[#38bdf8] tracking-wider uppercase">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-surface border border-primary-container/40 shadow-[0_0_15px_rgba(56,189,248,0.2)]">
+          <HelpCircle className="w-3.5 h-3.5 text-primary-container" />
+          <span className="font-mono text-xs font-bold text-primary-container tracking-wider uppercase">
             FREQUENTLY ASKED QUESTIONS
           </span>
         </div>
 
         <h2
-          className="text-3xl sm:text-4xl md:text-5xl text-[#f4f4f5] tracking-tight font-extrabold"
+          className="text-3xl sm:text-4xl md:text-5xl text-on-background tracking-tight font-extrabold"
           style={{ fontFamily: 'Sora, sans-serif' }}
         >
           Everything you need to know.
         </h2>
-        <p className="text-base sm:text-lg text-[#94a3b8] max-w-2xl mx-auto leading-relaxed font-sans">
+        <p className="text-base sm:text-lg text-on-surface-variant max-w-2xl mx-auto leading-relaxed font-sans">
           Clear answers about multi-modal file ingestion, citation accuracy, Python execution, and enterprise security.
         </p>
       </div>
@@ -66,10 +66,10 @@ export const FAQSection = () => {
           return (
             <div
               key={index}
-              className={`bg-[#08101d] border rounded-2xl overflow-hidden transition-all duration-300 ease-out hover:scale-[1.01] active:scale-[0.99] ${
+              className={`bg-surface border rounded-2xl overflow-hidden transition-all duration-300 ease-out hover:scale-[1.01] active:scale-[0.99] ${
                 isOpen
-                  ? 'border-[#38bdf8]/60 bg-[#091424] shadow-[0_0_25px_rgba(56,189,248,0.12)]'
-                  : 'border-[#1e293b] hover:border-[#38bdf8]/40 hover:bg-[#091424]/50 hover:shadow-[0_0_20px_rgba(56,189,248,0.08)]'
+                  ? 'border-primary-container/60 bg-surface-variant shadow-[0_0_25px_rgba(56,189,248,0.12)]'
+                  : 'border-outline-variant hover:border-primary-container/40 hover:bg-surface-variant/50 hover:shadow-[0_0_20px_rgba(56,189,248,0.08)]'
               }`}
             >
               <button
@@ -80,7 +80,7 @@ export const FAQSection = () => {
                 <div className="flex items-center gap-3">
                   <span
                     className={`text-sm sm:text-base font-bold transition-colors ${
-                      isOpen ? 'text-[#38bdf8]' : 'text-[#f4f4f5] group-hover:text-[#38bdf8]'
+                      isOpen ? 'text-primary-container' : 'text-on-background group-hover:text-primary-container'
                     }`}
                     style={{ fontFamily: 'Sora, sans-serif' }}
                   >
@@ -91,20 +91,20 @@ export const FAQSection = () => {
                 <div
                   className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border transition-all ${
                     isOpen
-                      ? 'bg-[#38bdf8]/20 border-[#38bdf8]/40 text-[#38bdf8]'
-                      : 'bg-[#0e1928] border-[#1e293b] text-[#94a3b8] group-hover:text-[#f4f4f5]'
+                      ? 'bg-primary-container/20 border-primary-container/40 text-primary-container'
+                      : 'bg-surface-container border-outline-variant text-on-surface-variant group-hover:text-on-background'
                   }`}
                 >
                   <ChevronDown
                     className={`w-4 h-4 transition-transform duration-200 ${
-                      isOpen ? 'rotate-180 text-[#38bdf8]' : ''
+                      isOpen ? 'rotate-180 text-primary-container' : ''
                     }`}
                   />
                 </div>
               </button>
 
               {isOpen && (
-                <div className="px-5 pb-6 sm:px-6 text-xs sm:text-sm text-[#94a3b8] leading-relaxed border-t border-[#1e293b] pt-4 font-sans">
+                <div className="px-5 pb-6 sm:px-6 text-xs sm:text-sm text-on-surface-variant leading-relaxed border-t border-outline-variant pt-4 font-sans">
                   {faq.answer}
                 </div>
               )}

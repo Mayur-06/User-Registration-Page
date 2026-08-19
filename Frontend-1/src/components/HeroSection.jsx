@@ -30,30 +30,30 @@ export const HeroSection = ({ onTryFree, onWatchDemo }) => {
       {/* 2. Content Container */}
       <div className="max-w-4xl mx-auto relative z-10 flex flex-col items-center gap-6">
         {/* Top Live Status Pill */}
-        <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#081322]/90 border border-[#38bdf8]/40 shadow-[0_0_20px_rgba(56,189,248,0.25)] backdrop-blur-md transition-all hover:border-[#38bdf8]/70 hover:shadow-[0_0_25px_rgba(56,189,248,0.4)] cursor-default">
+        <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[color:var(--color-surface-variant)]/90 border border-[color:var(--color-primary)]/40 shadow-[0_0_20px_rgba(56,189,248,0.25)] backdrop-blur-md transition-all hover:border-[color:var(--color-primary)]/70 hover:shadow-[0_0_25px_rgba(56,189,248,0.4)] cursor-default">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#38bdf8] opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-[#38bdf8]" />
           </span>
-          <span className="font-mono text-xs font-semibold text-[#38bdf8] tracking-wide">
+          <span className="font-mono text-xs font-semibold text-primary-container tracking-wide">
             LucyChat Engine v1.0 Live
           </span>
         </div>
 
         {/* Primary Headline */}
         <h1
-          className="text-4xl sm:text-6xl md:text-7xl font-extrabold text-[#f4f4f5] leading-[1.1] tracking-tight max-w-4xl drop-shadow-sm"
+          className="text-4xl sm:text-6xl md:text-7xl font-extrabold text-on-background leading-[1.1] tracking-tight max-w-4xl drop-shadow-sm"
           style={{ fontFamily: 'Sora, sans-serif' }}
         >
           Chat with anything.{' '}
           <br className="hidden sm:inline" />
-          <span className="bg-gradient-to-r from-[#38bdf8] via-[#2fd9f4] to-[#818cf8] bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-primary-container via-[#2fd9f4] to-secondary bg-clip-text text-transparent">
             Text, Docs, Images.
           </span>
         </h1>
 
         {/* Subheadline */}
-        <p className="text-base sm:text-lg md:text-xl text-[#a1a1aa] max-w-2xl mx-auto leading-relaxed font-sans drop-shadow-sm">
+        <p className="text-base sm:text-lg md:text-xl text-on-surface-variant max-w-2xl mx-auto leading-relaxed font-sans drop-shadow-sm">
           The premium AI canvas engineered for complex tasks. Seamlessly integrate your files, visualize data, and reason through vast information landscapes with unparalleled precision.
         </p>
 

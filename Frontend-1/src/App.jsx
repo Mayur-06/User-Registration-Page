@@ -43,6 +43,15 @@ export default function App() {
 
   const [contextFiles, setContextFiles] = useState(INITIAL_CONTEXT_FILES);
 
+  // Modals state
+  const [isWatchDemoOpen, setIsWatchDemoOpen] = useState(false);
+  const [isAddContextOpen, setIsAddContextOpen] = useState(false);
+  const [isDocViewerOpen, setIsDocViewerOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  const [selectedCitation, setSelectedCitation] = useState(null);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#050b14] text-[#f4f4f5]">
@@ -53,15 +62,6 @@ export default function App() {
       </div>
     );
   }
-
-  // Modals state
-  const [isWatchDemoOpen, setIsWatchDemoOpen] = useState(false);
-  const [isAddContextOpen, setIsAddContextOpen] = useState(false);
-  const [isDocViewerOpen, setIsDocViewerOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState(null);
-  const [selectedCitation, setSelectedCitation] = useState(null);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [authMode, setAuthMode] = useState('login');
 
   const handleOpenAuth = (mode = 'login') => {
     setAuthMode(mode);

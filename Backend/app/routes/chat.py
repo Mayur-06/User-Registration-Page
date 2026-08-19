@@ -73,6 +73,17 @@ async def chat(
 
 @router.post("/documents/upload")
 async def upload_document(file: UploadFile = File(...), user_id: str = Depends(get_current_user_id)):
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file provided.")
+
+    filename = file.filename.lower()
+    allowed_extensions = (".pdf", ".txt", ".csv", ".docx", ".doc")
+    if not any(filename.endswith(ext) for ext in allowed_extensions):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type: {file.filename}. Only PDF, TXT, CSV, DOCX, and DOC files are supported.",
+        )
+
     user_dir = Path("documents") / user_id
     user_dir.mkdir(parents=True, exist_ok=True)
     file_path = user_dir / file.filename
@@ -80,8 +91,14 @@ async def upload_document(file: UploadFile = File(...), user_id: str = Depends(g
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    loader = DocumentLoader(str(file_path))
-    document = loader.load()
+    try:
+        loader = DocumentLoader(str(file_path))
+        document = loader.load()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Could not read {file.filename}: {str(exc)}",
+        )
 
     rag = get_rag_for_user(user_id)
     chunks = rag.chunker.chunk_text(document)

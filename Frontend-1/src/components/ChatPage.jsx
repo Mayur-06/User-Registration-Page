@@ -331,7 +331,7 @@ export const ChatPage = ({
 
   return (
     <div
-      className="h-screen w-screen bg-[#050b14] text-[#f4f4f5] flex overflow-hidden font-sans"
+      className="h-screen w-screen bg-background text-on-background flex overflow-hidden font-sans"
       style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
       onContextMenu={(e) => e.preventDefault()}
       onDragOver={handleDragOver}
@@ -356,7 +356,7 @@ export const ChatPage = ({
 
       {/* ===================== 1. LEFT SIDEBAR ===================== */}
       <aside
-        className={`h-full bg-[#070f1d] border-r border-[#1e293b] flex flex-col justify-between transition-all duration-300 z-30 shrink-0 ${
+        className={`h-full bg-surface-container-low border-r border-outline-variant flex flex-col justify-between transition-all duration-300 z-30 shrink-0 ${
           sidebarCollapsed
             ? 'w-[76px] max-md:w-0 max-md:overflow-hidden max-md:border-r-0'
             : 'w-64 sm:w-72 max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:shadow-2xl'
@@ -580,9 +580,9 @@ export const ChatPage = ({
       </aside>
 
       {/* ===================== 2. MAIN CHAT AREA ===================== */}
-      <main className="flex-1 flex flex-col h-full bg-[#050b14] relative overflow-hidden">
+      <main className="flex-1 flex flex-col h-full bg-background relative overflow-hidden">
         {/* Top Header Bar */}
-        <header className="h-16 border-b border-[#1e293b] bg-[#070f1d]/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 z-20">
+        <header className="h-16 border-b border-outline-variant bg-surface-container-low/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 z-20">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}

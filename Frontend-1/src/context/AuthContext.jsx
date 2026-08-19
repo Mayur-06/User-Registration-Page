@@ -16,20 +16,26 @@ export const AuthProvider = ({ children }) => {
 
       try {
         if (token) {
-          // Verify & fetch current user
-          const currentUser = await api.auth.getMe();
-          setUser(currentUser);
+          try {
+            const currentUser = await api.auth.getMe();
+            setUser(currentUser);
+          } catch (err) {
+            console.warn('Session restoration failed or expired:', err);
+            clearAccessToken();
+            setUser(null);
+          }
         } else {
-          // Attempt refresh using HttpOnly cookie if access token isn't in localStorage
-          const refreshedUser = await api.auth.refresh();
-          if (refreshedUser) {
-            setUser(refreshedUser);
+          try {
+            const refreshedUser = await api.auth.refresh();
+            if (refreshedUser) {
+              setUser(refreshedUser);
+            }
+          } catch (err) {
+            // Backend may be stopped while the frontend is still being used.
+            // This should not crash the app or block the UI.
+            setUser(null);
           }
         }
-      } catch (err) {
-        console.warn('Session restoration failed or expired:', err);
-        clearAccessToken();
-        setUser(null);
       } finally {
         setLoading(false);
       }

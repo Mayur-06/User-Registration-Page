@@ -43,7 +43,7 @@ export const Navbar = ({
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-[#09090b]/80 backdrop-blur-md border-b border-[#1e293b]">
+    <header className="sticky top-0 z-50 w-full bg-[color:var(--color-header)] backdrop-blur-md border-b border-[color:var(--color-border)]">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* 1. Left Section (Brand Logo) */}
         <div className="flex items-center">
@@ -62,8 +62,8 @@ export const Navbar = ({
             onClick={() => handleNavClick('features')}
             className={`text-sm font-medium transition-colors duration-200 cursor-pointer ${
               currentView === 'features'
-                ? 'text-[#38bdf8] font-semibold'
-                : 'text-[#94a3b8] hover:text-[#f4f4f5]'
+                ? 'text-primary-container font-semibold'
+                : 'text-on-surface-variant hover:text-on-background'
             }`}
           >
             Features
@@ -73,8 +73,8 @@ export const Navbar = ({
             onClick={() => handleNavClick('pricing')}
             className={`text-sm font-medium transition-colors duration-200 cursor-pointer ${
               currentView === 'pricing'
-                ? 'text-[#38bdf8] font-semibold'
-                : 'text-[#94a3b8] hover:text-[#f4f4f5]'
+                ? 'text-primary-container font-semibold'
+                : 'text-on-surface-variant hover:text-on-background'
             }`}
           >
             Pricing
@@ -84,8 +84,8 @@ export const Navbar = ({
             onClick={() => handleNavClick('docs')}
             className={`text-sm font-medium transition-colors duration-200 cursor-pointer ${
               currentView === 'docs'
-                ? 'text-[#38bdf8] font-semibold'
-                : 'text-[#94a3b8] hover:text-[#f4f4f5]'
+                ? 'text-primary-container font-semibold'
+                : 'text-on-surface-variant hover:text-on-background'
             }`}
           >
             Docs
@@ -95,12 +95,12 @@ export const Navbar = ({
             onClick={() => handleNavClick('faq')}
             className={`text-sm font-medium transition-colors duration-200 cursor-pointer flex items-center gap-1.5 ${
               currentView === 'faq'
-                ? 'text-[#38bdf8] font-semibold'
-                : 'text-[#94a3b8] hover:text-[#38bdf8]'
+                ? 'text-primary-container font-semibold'
+                : 'text-on-surface-variant hover:text-primary-container'
             }`}
             title="Everything you need to know"
           >
-            <HelpCircle className="w-4 h-4 text-[#2fd9f4]" />
+            <HelpCircle className="w-4 h-4 text-tertiary" />
             <span>FAQ</span>
             {/* <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-[#2fd9f4]/10 text-[#2fd9f4] border border-[#2fd9f4]/30 hidden lg:inline">
               Guide

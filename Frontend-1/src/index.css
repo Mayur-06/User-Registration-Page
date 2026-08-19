@@ -12,6 +12,34 @@
 
 @layer base {
   :root {
+    /* Brand system tokens */
+    --color-background: #050b14;
+    --color-background-strong: #03070d;
+    --color-surface: #08101d;
+    --color-surface-variant: #091424;
+    --color-surface-container: #0d1828;
+    --color-surface-container-high: #111f32;
+    --color-surface-container-low: #060c16;
+    --color-surface-container-highest: #15273e;
+    --color-header: rgba(9, 9, 11, 0.8);
+    --color-text: #f4f4f5;
+    --color-text-muted: #a1a1aa;
+    --color-text-subtle: #94a3b8;
+    --color-primary: #38bdf8;
+    --color-primary-strong: #0284c7;
+    --color-primary-soft: rgba(56, 189, 248, 0.2);
+    --color-secondary: #818cf8;
+    --color-border: #1e293b;
+    --color-border-strong: #334155;
+    --color-success: #2fd9f4;
+    --color-error: #f87171;
+
+    /* Shared motion and depth */
+    --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.25);
+    --shadow-glow-primary: 0 0 20px rgba(56, 189, 248, 0.35);
+    --shadow-glow-primary-strong: 0 0 35px rgba(56, 189, 248, 0.6);
+
+    /* Typography */
     --font-sora: 'Sora', sans-serif;
     --font-inter: 'Inter', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
@@ -19,25 +47,60 @@
 
   body {
     font-family: 'Sora', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #050b14;
-    color: #f4f4f5;
+    background-color: var(--color-background);
+    color: var(--color-text);
   }
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar - WebKit browsers (Chrome, Safari, Edge) */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #050b14;
+  background: var(--color-background);
 }
+
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: var(--color-border);
   border-radius: 4px;
+  border: 2px solid var(--color-background);
+  background-clip: padding-box;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background-color: var(--color-border-strong);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--color-background);
+}
+
+/* Firefox scrollbar styling (fallback) */
+* {
+  scrollbar-color: var(--color-border) var(--color-background);
+  scrollbar-width: thin;
+}
+
+/* Focus state for keyboard navigation (cross-browser) */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Remove outline for mouse users in browsers that support :focus-visible */
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+a:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .glass-panel {
@@ -79,33 +142,498 @@
 }
 
 /* Theme utility tokens */
-.bg-background { background-color: #050b14; }
-.text-background { color: #050b14; }
-.bg-surface { background-color: #08101d; }
-.text-on-background { color: #f4f4f5; }
-.text-on-surface { color: #f4f4f5; }
-.text-on-surface-variant { color: #94a3b8; }
-.bg-surface-variant { background-color: #091424; }
-.bg-surface-container { background-color: #0d1828; }
-.bg-surface-container-high { background-color: #111f32; }
-.bg-surface-container-low { background-color: #060c16; }
-.bg-surface-container-lowest { background-color: #03070d; }
-.bg-surface-container-highest { background-color: #15273e; }
-.border-outline-variant { border-color: #1e293b; }
-.border-outline { border-color: #334155; }
-.bg-primary-container { background-color: #38bdf8; }
-.text-primary-container { color: #38bdf8; }
+.bg-background { background-color: var(--color-background); }
+.text-background { color: var(--color-background); }
+.bg-surface { background-color: var(--color-surface); }
+.text-on-background { color: var(--color-text); }
+.text-on-surface { color: var(--color-text); }
+.text-on-surface-variant { color: var(--color-text-subtle); }
+.bg-surface-variant { background-color: var(--color-surface-variant); }
+.bg-surface-container { background-color: var(--color-surface-container); }
+.bg-surface-container-high { background-color: var(--color-surface-container-high); }
+.bg-surface-container-low { background-color: var(--color-surface-container-low); }
+.bg-surface-container-lowest { background-color: var(--color-background-strong); }
+.bg-surface-container-highest { background-color: var(--color-surface-container-highest); }
+.border-outline-variant { border-color: var(--color-border); }
+.border-outline { border-color: var(--color-border-strong); }
+.bg-primary-container { background-color: var(--color-primary); }
+.text-primary-container { color: var(--color-primary); }
 .text-on-primary-container { color: #020617; }
-.border-primary-container { border-color: #38bdf8; }
-.text-error { color: #f87171; }
-.bg-error { background-color: #f87171; }
-.text-tertiary { color: #2fd9f4; }
-.bg-tertiary { background-color: #2fd9f4; }
+.border-primary-container { border-color: var(--color-primary); }
+.text-error { color: var(--color-error); }
+.bg-error { background-color: var(--color-error); }
+.text-tertiary { color: var(--color-success); }
+.bg-tertiary { background-color: var(--color-success); }
 
-/* Font utilities */
+.shade-primary-glow { box-shadow: var(--shadow-glow-primary); }
+.shade-panel { box-shadow: var(--shadow-soft); }
+
+.bg-panel { background-color: var(--color-surface-container); }
+.bg-panel-elevated { background-color: var(--color-surface-container-high); }
+.bg-panel-muted { background-color: var(--color-surface); }
+.bg-panel-deep { background-color: var(--color-background-strong); }
+.bg-input { background-color: var(--color-background-strong); }
+.border-panel { border-color: var(--color-border); }
+.border-panel-strong { border-color: var(--color-border-strong); }
+.text-muted { color: var(--color-text-muted); }
+.text-subtle { color: var(--color-text-subtle); }
+.text-brand { color: var(--color-primary); }
+.bg-brand { background-color: var(--color-primary); }
+
 .font-display-lg { font-family: 'Sora', sans-serif; font-weight: 700; }
 .font-headline-lg { font-family: 'Sora', sans-serif; font-weight: 700; }
 .font-headline-md { font-family: 'Sora', sans-serif; font-weight: 600; }
 .font-body-lg { font-family: 'Sora', sans-serif; }
 .font-body-md { font-family: 'Sora', sans-serif; }
 .font-label-md { font-family: 'JetBrains Mono', monospace; }
+
+/* ========== Cross-browser media and element fixes ========== */
+
+/* Images and media */
+img, picture, svg, video, canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* SVG styling */
+svg {
+  overflow: visible;
+}
+
+/* Tables */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  width: 100%;
+}
+
+/* Code blocks */
+code, pre {
+  font-family: var(--font-mono);
+  line-height: 1.5;
+}
+
+pre {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Links */
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+  body {
+    color: #ffffff;
+  }
+
+  input, textarea, select {
+    border-width: 2px;
+  }
+
+  button {
+    font-weight: 700;
+  }
+}
+
+/* Support for forced colors mode (Windows High Contrast) */
+@media (forced-colors: active) {
+  button, input, textarea, select {
+    border: 1px solid;
+    padding: 0.5em;
+  }
+
+  a {
+    text-decoration: underline;
+  }
+}
+
+/* Minimum touch target size (WCAG recommendation)
+   NOTE: Do NOT force display/flex/min-width on all buttons/links here —
+   it overrides Tailwind utility classes and breaks layouts (nav items,
+   inline text links, icon buttons, etc.). Only apply a mild min-height
+   to UNSTYLED controls. */
+button:not([class]),
+input[type="button"]:not([class]),
+input[type="submit"]:not([class]),
+input[type="reset"]:not([class]) {
+  min-height: 44px;
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+
+  a {
+    text-decoration: underline;
+  }
+
+  button, input, select, textarea {
+    border: 1px solid #000;
+  }
+
+  img {
+    max-width: 100%;
+  }
+}
+
+/* Smooth color transitions across browsers */
+button, input, textarea, select, a {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* ========== Comprehensive form input styling ========== */
+
+/* Ensure all input types and textareas have consistent appearance */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="time"],
+textarea,
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: var(--color-surface-container-low);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  transition: all 0.2s ease;
+}
+
+/* Input focus states - works across all browsers */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1), 0 0 20px rgba(56, 189, 248, 0.25);
+}
+
+/* Hover states */
+input:hover:not(:disabled),
+textarea:hover:not(:disabled),
+select:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  opacity: 0.85;
+}
+
+/* Disabled states */
+input:disabled,
+textarea:disabled,
+select:disabled {
+  background-color: var(--color-surface-container-low);
+  color: var(--color-text-subtle);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Select dropdown arrow styling */
+select {
+  padding-right: 2.5rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.875rem center;
+  background-size: 1rem 1rem;
+}
+
+select::-ms-expand {
+  display: none;
+}
+
+/* TextArea specific fixes */
+textarea {
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+textarea::-webkit-outer-spin-button,
+textarea::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/* Fix for mobile browsers not respecting font size on inputs */
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+/* Autofill styling - remove browser default yellow background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px var(--color-surface-container-low) inset !important;
+  box-shadow: 0 0 0 30px var(--color-surface-container-low) inset !important;
+}
+
+input:-webkit-autofill {
+  -webkit-text-fill-color: var(--color-text) !important;
+}
+
+/* Fix for iOS Safari input padding */
+@supports (-webkit-touch-callout: none) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  textarea {
+    padding: 0.875rem;
+    font-size: 16px;
+  }
+}
+
+/* Fix iOS Safari file input styling */
+input[type="file"] {
+  cursor: pointer;
+}
+
+input[type="file"]::-webkit-file-upload-button {
+  cursor: pointer;
+  background: var(--color-primary);
+  color: #051424;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+input[type="file"]::-webkit-file-upload-button:hover {
+  background: var(--color-primary-strong);
+}
+
+input[type="file"]::file-selector-button {
+  cursor: pointer;
+  background: var(--color-primary);
+  color: #051424;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: var(--color-primary-strong);
+}
+
+/* Fix iOS zoom on input focus */
+@media (max-width: 1024px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Checkbox and radio button styling */
+input[type="checkbox"],
+input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--color-border);
+  border-radius: 0.25rem;
+  background-color: var(--color-surface-container-low);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  top: 0.2rem;
+}
+
+input[type="radio"] {
+  border-radius: 50%;
+}
+
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+input[type="checkbox"]:disabled,
+input[type="radio"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ========== Cross-browser layout and rendering fixes ========== */
+
+/* NOTE: Do NOT define custom `.flex` / `.grid` class rules here.
+   They are unlayered CSS and therefore override Tailwind's `flex-col`
+   / `grid-*` utilities (which live in @layer utilities), breaking
+   every flex-direction:column and grid layout in the app. */
+
+/* Ensure proper transform rendering */
+* {
+  -webkit-font-smoothing: antialiased;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* ========== Fallback for browsers not supporting CSS variables ========== */
+
+/* Grayscale mode support (for accessibility) */
+@media (prefers-color-scheme: dark) {
+  body {
+    color-scheme: dark;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  body {
+    color-scheme: light;
+  }
+}
+
+/* ========== Responsive typography fix ========== */
+
+/* Ensure text doesn't overflow on small screens */
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+  }
+}
+
+/* ========== Mobile-specific browser fixes ========== */
+
+/* Chrome mobile specific fixes */
+@media screen and (max-width: 480px) {
+  input, textarea, select, button {
+    min-height: 48px;
+  }
+}
+
+/* Safari iOS specific fixes */
+@supports (-webkit-touch-callout: none) {
+  body {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  button, a[role="button"] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* Firefox Android fixes */
+@-moz-document url-prefix() {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* ========== Print media queries ========== */
+
+@media print {
+  * {
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  a, a:visited {
+    text-decoration: underline;
+  }
+
+  img {
+    max-width: 100%;
+  }
+
+  @page {
+    margin: 0.5cm;
+  }
+}
+
+/* ========== High DPI/Retina display support ========== */
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  body {
+    -webkit-font-smoothing: subpixel-antialiased;
+  }
+
+  img {
+    image-rendering: -webkit-optimize-contrast;
+  }
+}
+
+/* ========== Ensure consistent button behavior ========== */
+
+button, [role="button"], input[type="button"], input[type="submit"], input[type="reset"] {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  transition: all 0.2s ease;
+}
+
+button:active, [role="button"]:active {
+  transform: scale(0.98);
+}
+
+button:disabled, [role="button"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}

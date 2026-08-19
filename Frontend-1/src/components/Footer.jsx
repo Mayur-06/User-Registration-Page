@@ -20,13 +20,13 @@ export const Footer = ({ onNavigate }) => {
   };
 
   return (
-    <footer className="bg-[#050b14] border-t border-[#1e293b] pt-12 pb-10 px-4 md:px-10 mt-10 relative overflow-hidden">
+    <footer className="bg-background border-t border-outline-variant pt-12 pb-10 px-4 md:px-10 mt-10 relative overflow-hidden">
       {/* Subtle ambient bottom glow */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-24 bg-[#38bdf8]/5 blur-[80px] pointer-events-none" />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-24 bg-primary-container/5 blur-[80px] pointer-events-none" />
 
       <div className="max-w-5xl mx-auto space-y-10">
         {/* Main Focused Row: Subscribe & Direct Contact */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-[#08101d] border border-[#1e293b] rounded-2xl p-6 sm:p-8 text-left shadow-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-surface border border-outline-variant rounded-2xl p-6 sm:p-8 text-left shadow-lg">
           {/* Left Column: Subscribe */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -36,7 +36,7 @@ export const Footer = ({ onNavigate }) => {
                 className="cursor-pointer"
               />
             </div>
-            <p className="text-xs text-[#94a3b8] leading-relaxed max-w-sm">
+            <p className="text-xs text-on-surface-variant leading-relaxed max-w-sm">
               Subscribe to model releases, benchmark updates, and multi-modal engine changelogs.
             </p>
 
@@ -49,11 +49,11 @@ export const Footer = ({ onNavigate }) => {
                   if (subscribed) setSubscribed(false);
                 }}
                 placeholder="engineer@company.com"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-[#050b14] border border-[#1e293b] focus:border-[#38bdf8] text-xs text-[#f4f4f5] placeholder-[#64748b] outline-none transition-colors font-mono"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-outline-variant focus:border-primary-container text-xs text-on-background placeholder-[#64748b] outline-none transition-colors font-mono"
               />
               <button
                 type="submit"
-                className="px-4 py-2.5 rounded-xl bg-[#38bdf8] hover:bg-[#38bdf8]/90 text-slate-950 text-xs font-bold transition-all shadow-[0_0_15px_rgba(56,189,248,0.3)] shrink-0 flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-primary-container hover:bg-primary-container/90 text-slate-950 text-xs font-bold transition-all shadow-[0_0_15px_rgba(56,189,248,0.3)] shrink-0 flex items-center gap-1.5 cursor-pointer"
               >
                 {subscribed ? (
                   <>
@@ -83,9 +83,9 @@ export const Footer = ({ onNavigate }) => {
               {/* Direct Mail */}
               <a
                 href="mailto:contact@lucychat.ai"
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#050b14] border border-[#1e293b] hover:border-[#38bdf8]/50 text-xs text-[#f4f4f5] font-medium transition-all"
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-background border border-outline-variant hover:border-primary-container/50 text-xs text-on-background font-medium transition-all"
               >
-                <Mail className="w-3.5 h-3.5 text-[#38bdf8]" />
+                <Mail className="w-3.5 h-3.5 text-primary-container" />
                 <span>contact@lucychat.ai</span>
               </a>
 
