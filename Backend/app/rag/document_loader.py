@@ -131,6 +131,10 @@ class DocumentLoader:
         return cleaned_pages
 
     def load(self):
+        if not self.pdf_path.lower().endswith(".pdf"):
+            raise ValueError(
+                f"DocumentLoader only supports PDF files. Got: {self.pdf_path}"
+            )
 
         pdf = fitz.open(self.pdf_path)
 

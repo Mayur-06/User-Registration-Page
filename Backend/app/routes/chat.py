@@ -17,24 +17,26 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 
-# Shared, stateless components — built once
-_shared = {
-    "chunker": TextChunker(),
-    "embedder": Embedder(),
-    "generator": Generator(),
-}
+# Shared, stateless components — lazy loaded on first RAG request
+_shared = {}
 
-class ChatRequestWithConvo(BaseModel):
-    question: str
-    conversation_id: uuid.UUID
+def get_shared_components():
+    if "chunker" not in _shared:
+        _shared["chunker"] = TextChunker()
+    if "embedder" not in _shared:
+        _shared["embedder"] = Embedder()
+    if "generator" not in _shared:
+        _shared["generator"] = Generator()
+    return _shared
 
 
 def get_rag_for_user(user_id: str) -> RAGPipeline:
-    faiss_manager = FAISSManager(_shared["embedder"], user_id=user_id)
+    shared = get_shared_components()
+    faiss_manager = FAISSManager(shared["embedder"], user_id=user_id)
     return RAGPipeline(
-        chunker=_shared["chunker"],
-        embedder=_shared["embedder"],
-        generator=_shared["generator"],
+        chunker=shared["chunker"],
+        embedder=shared["embedder"],
+        generator=shared["generator"],
         faiss_manager=faiss_manager,
     )
 
@@ -44,6 +46,11 @@ def get_rag_for_user(user_id: str) -> RAGPipeline:
 #     rag = get_rag_for_user(user_id)
 #     answer = rag.ask(question=request.question)
 #     return ChatResponse(answer=answer)
+
+class ChatRequestWithConvo(BaseModel):
+    question: str
+    conversation_id: uuid.UUID
+
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
@@ -66,6 +73,17 @@ async def chat(
 
 @router.post("/documents/upload")
 async def upload_document(file: UploadFile = File(...), user_id: str = Depends(get_current_user_id)):
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file provided.")
+
+    filename = file.filename.lower()
+    allowed_extensions = (".pdf", ".txt", ".csv", ".docx", ".doc")
+    if not any(filename.endswith(ext) for ext in allowed_extensions):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported file type: {file.filename}. Only PDF, TXT, CSV, DOCX, and DOC files are supported.",
+        )
+
     user_dir = Path("documents") / user_id
     user_dir.mkdir(parents=True, exist_ok=True)
     file_path = user_dir / file.filename
@@ -73,8 +91,14 @@ async def upload_document(file: UploadFile = File(...), user_id: str = Depends(g
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    loader = DocumentLoader(str(file_path))
-    document = loader.load()
+    try:
+        loader = DocumentLoader(str(file_path))
+        document = loader.load()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Could not read {file.filename}: {str(exc)}",
+        )
 
     rag = get_rag_for_user(user_id)
     chunks = rag.chunker.chunk_text(document)

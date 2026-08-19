@@ -46,6 +46,14 @@ async def delete_user(db: AsyncSession, user: User) -> None:
     await db.delete(user)
     await db.commit()
 
+async def update_user(db: AsyncSession, user: User, **fields) -> User:
+    for key, value in fields.items():
+        if value is not None and hasattr(user, key):
+            setattr(user, key, value)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
 
 async def store_refresh_token(db, user_id: uuid.UUID, token_hash: str, days_valid: int = 7):
     rt = RefreshToken(
