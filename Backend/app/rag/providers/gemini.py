@@ -49,4 +49,7 @@ Context and Question:
             )
         )
 
-        return response.text.strip()
+        text = response.text.strip()
+        if isinstance(text, bytes):
+            text = text.decode("utf-8", errors="replace")
+        return text
