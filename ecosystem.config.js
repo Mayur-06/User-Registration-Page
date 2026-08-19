@@ -7,12 +7,12 @@ module.exports = {
       args: "app.main:app --reload --port 8000",
       interpreter: "none",
     },
-    {
+        {
       name: "frontend",
       cwd: "./Frontend-1",
-      script: "cmd",
-      args: '/c "npm run dev"',
+      script: "npm",
+      args: "run dev",
       interpreter: "none",
-    },
+    }
   ],
 };

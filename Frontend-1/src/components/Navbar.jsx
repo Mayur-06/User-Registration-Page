@@ -69,7 +69,7 @@ export const Navbar = ({
             Features
           </button>
 
-          <button
+          {/* <button
             onClick={() => handleNavClick('pricing')}
             className={`text-sm font-medium transition-colors duration-200 cursor-pointer ${
               currentView === 'pricing'
@@ -78,9 +78,9 @@ export const Navbar = ({
             }`}
           >
             Pricing
-          </button>
+          </button> */}
 
-          <button
+          {/* <button
             onClick={() => handleNavClick('docs')}
             className={`text-sm font-medium transition-colors duration-200 cursor-pointer ${
               currentView === 'docs'
@@ -89,7 +89,7 @@ export const Navbar = ({
             }`}
           >
             Docs
-          </button>
+          </button> */}
 
           <button
             onClick={() => handleNavClick('faq')}

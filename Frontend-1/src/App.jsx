@@ -3,7 +3,7 @@ import { Loader2 } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
 import { InteractiveSandbox } from './components/InteractiveSandbox';
-import { SocialProofBar } from './components/SocialProofBar';
+//import { SocialProofBar } from './components/SocialProofBar';
 import { BentoArchitecture } from './components/BentoArchitecture';
 import { AbsoluteContextGrounding } from './components/AbsoluteContextGrounding';
 import { PricingSection } from './components/PricingSection';
@@ -57,7 +57,7 @@ export default function App() {
       <div className="min-h-screen flex items-center justify-center bg-[#050b14] text-[#f4f4f5]">
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-[#1e293b] bg-[#08101d]/90 px-8 py-6 shadow-[0_0_30px_rgba(56,189,248,0.12)]">
           <Loader2 className="w-8 h-8 animate-spin text-[#38bdf8]" />
-          <p className="text-sm font-medium text-[#e2e8f0]">Loading your workspace...</p>
+          <p className="text-sm font-medium text-[#e2e8f0]">Loading...</p>
         </div>
       </div>
     );
@@ -197,7 +197,7 @@ export default function App() {
         />
 
         {/* 3. Empowering Workflows (Social Proof / Logo Bar) */}
-        <SocialProofBar />
+        {/* <SocialProofBar /> */}
 
         {/* 4. Powerful Architecture Bento Grid */}
         <div id="features">
@@ -205,10 +205,10 @@ export default function App() {
         </div>
 
         {/* 5. Absolute Context Grounding Split Inspector */}
-        <AbsoluteContextGrounding />
+        {/* <AbsoluteContextGrounding /> */}
 
         {/* 6. Transparent Pricing Matrix */}
-        <PricingSection onSelectTier={handleSelectPricingTier} />
+        {/* <PricingSection onSelectTier={handleSelectPricingTier} /> */}
 
         {/* 7. Frequently Asked Questions */}
         <FAQSection />

@@ -238,7 +238,7 @@ export const ProfilePage = ({
             User Profile
           </h1>
           <p className="text-sm text-on-surface-variant leading-relaxed">
-            Manage your personal profile, credentials, and workspace preferences stored in your backend database.
+            Manage your personal profile and workspace preferences stored in your backend database.
           </p>
         </div>
 
@@ -343,7 +343,7 @@ export const ProfilePage = ({
           <div className="border-b border-outline-variant pb-4">
             <h2 className="text-base font-bold text-on-background">Profile Information</h2>
             <p className="text-xs text-on-surface-variant mt-0.5">
-              Edit your name, occupation, education qualification, and age. Updates are synced directly to PostgreSQL.
+              Edit your name, occupation, education qualification, and age.
             </p>
           </div>
 

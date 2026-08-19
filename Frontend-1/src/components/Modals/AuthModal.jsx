@@ -354,7 +354,7 @@ export const AuthModal = ({
                 <div className="space-y-1">
                   <label className="block text-[11px] font-mono text-[#94a3b8]">Full Name</label>
                   <div className="relative flex items-center group">
-                    <User className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" />
+                    {/* <User className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" /> */}
                     <input
                       type="text"
                       required
@@ -382,7 +382,7 @@ export const AuthModal = ({
                   <div className="space-y-1">
                     <label className="block text-[11px] font-mono text-[#94a3b8]">Age</label>
                     <div className="relative flex items-center group">
-                      <Calendar className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" />
+                      {/* <Calendar className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" /> */}
                       <input
                         type="number"
                         required
@@ -410,7 +410,7 @@ export const AuthModal = ({
                   <div className="space-y-1">
                     <label className="block text-[11px] font-mono text-[#94a3b8]">Occupation</label>
                     <div className="relative flex items-center group">
-                      <Briefcase className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" />
+                      {/* <Briefcase className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" /> */}
                       <input
                         type="text"
                         required
@@ -437,7 +437,7 @@ export const AuthModal = ({
                 <div className="space-y-1">
                   <label className="block text-[11px] font-mono text-[#94a3b8]">Education Qualification</label>
                   <div className="relative flex items-center group">
-                    <GraduationCap className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" />
+                    {/* <GraduationCap className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" /> */}
                     <input
                       type="text"
                       required
@@ -465,7 +465,7 @@ export const AuthModal = ({
             <div className="space-y-1">
               <label className="block text-[11px] font-mono text-[#94a3b8]">Email Address</label>
               <div className="relative flex items-center group">
-                <Mail className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" />
+                {/* <Mail className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" /> */}
                 <input
                   type="email"
                   required
@@ -491,7 +491,7 @@ export const AuthModal = ({
             <div className="space-y-1">
               <label className="block text-[11px] font-mono text-[#94a3b8]">Password</label>
               <div className="relative flex items-center group">
-                <Lock className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" />
+                {/* <Lock className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" /> */}
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
@@ -592,7 +592,7 @@ export const AuthModal = ({
           </div>
 
           {/* Legal Notice */}
-          <div className="pt-4 text-center">
+          {/* <div className="pt-4 text-center">
             <p className="text-[10px] text-[#64748b] leading-relaxed">
               By signing up, you agree to our{' '}
               <button
@@ -612,7 +612,7 @@ export const AuthModal = ({
               </button>
               . We do not train on your inputs.
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
 

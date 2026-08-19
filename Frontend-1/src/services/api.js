@@ -2,7 +2,7 @@
  * Centralized API Service for connecting Frontend-1 to the FastAPI Backend
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL
 
 const TOKEN_STORAGE_KEY = 'access_token';
 
