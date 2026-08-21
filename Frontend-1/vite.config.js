@@ -54,6 +54,10 @@ export default defineConfig(() => {
           target: 'http://localhost:8001',
           changeOrigin: true,
         },
+        '/supabase-health': {
+          target: 'http://localhost:8001',
+          changeOrigin: true,
+        },
       },
     },
     preview: {

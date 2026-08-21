@@ -20,4 +20,11 @@ langchain-text-splitters
 PyMuPDF
 psycopg2-binary
 bcrypt==4.0.1
-supabase-py
+supabase
+pydantic
+langchain-core
+pgvector
+langgraph 
+langchain-google-genai 
+langchain-community
+cloudinary

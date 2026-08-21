@@ -353,7 +353,7 @@ export const AuthModal = ({
                 {/* 1. Name */}
                 <div className="space-y-1">
                   <label className="block text-[11px] font-mono text-[#94a3b8]">Full Name</label>
-                  <div className="relative flex items-center group">
+                  <div>
                     {/* <User className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" /> */}
                     <input
                       type="text"
@@ -361,7 +361,7 @@ export const AuthModal = ({
                       value={fullName}
                       onChange={(e) => handleFieldChange('fullName', e.target.value)}
                       placeholder="e.g. Alex Vance"
-                      className={`w-full bg-[#070e1a] border rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-[#f4f4f5] placeholder:text-[#475569] focus:outline-none focus:ring-1 focus:shadow-[0_0_20px_rgba(56,189,248,0.25)] hover:active:border-[#38bdf8] transition-all font-sans ${
+                      className={`w-full bg-[#070e1a] border rounded-xl px-4 pr-4 py-2.5 text-xs sm:text-sm text-[#f4f4f5] placeholder:text-[#475569] focus:outline-none focus:ring-1 focus:shadow-[0_0_20px_rgba(56,189,248,0.25)] hover:active:border-[#38bdf8] transition-all font-sans ${
                         fieldErrors.fullName
                           ? 'border-rose-500/50 focus:border-rose-500 focus:ring-rose-500/30'
                           : 'border-[#1a2b40] focus:border-[#38bdf8] focus:ring-[#38bdf8]/50 hover:border-[#38bdf8]/50'
@@ -381,7 +381,7 @@ export const AuthModal = ({
                   {/* Age */}
                   <div className="space-y-1">
                     <label className="block text-[11px] font-mono text-[#94a3b8]">Age</label>
-                    <div className="relative flex items-center group">
+                    <div>
                       {/* <Calendar className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" /> */}
                       <input
                         type="number"
@@ -391,7 +391,7 @@ export const AuthModal = ({
                         value={age}
                         onChange={(e) => handleFieldChange('age', e.target.value)}
                         placeholder="e.g. 26"
-                        className={`w-full bg-[#070e1a] border rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-[#f4f4f5] placeholder:text-[#475569] focus:outline-none focus:ring-1 focus:shadow-[0_0_20px_rgba(56,189,248,0.25)] hover:active:border-[#38bdf8] transition-all font-sans ${
+                        className={`w-full bg-[#070e1a] border rounded-xl px-4 pr-4 py-2.5 text-xs sm:text-sm text-[#f4f4f5] placeholder:text-[#475569] focus:outline-none focus:ring-1 focus:shadow-[0_0_20px_rgba(56,189,248,0.25)] hover:active:border-[#38bdf8] transition-all font-sans ${
                           fieldErrors.age
                             ? 'border-rose-500/50 focus:border-rose-500 focus:ring-rose-500/30'
                             : 'border-[#1a2b40] focus:border-[#38bdf8] focus:ring-[#38bdf8]/50 hover:border-[#38bdf8]/50'
@@ -409,7 +409,7 @@ export const AuthModal = ({
                   {/* Occupation */}
                   <div className="space-y-1">
                     <label className="block text-[11px] font-mono text-[#94a3b8]">Occupation</label>
-                    <div className="relative flex items-center group">
+                    <div>
                       {/* <Briefcase className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" /> */}
                       <input
                         type="text"
@@ -417,7 +417,7 @@ export const AuthModal = ({
                         value={occupation}
                         onChange={(e) => handleFieldChange('occupation', e.target.value)}
                         placeholder="e.g. AI Researcher"
-                        className={`w-full bg-[#070e1a] border rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-[#f4f4f5] placeholder:text-[#475569] focus:outline-none focus:ring-1 focus:shadow-[0_0_20px_rgba(56,189,248,0.25)] hover:active:border-[#38bdf8] transition-all font-sans ${
+                        className={`w-full bg-[#070e1a] border rounded-xl px-4 pr-4 py-2.5 text-xs sm:text-sm text-[#f4f4f5] placeholder:text-[#475569] focus:outline-none focus:ring-1 focus:shadow-[0_0_20px_rgba(56,189,248,0.25)] hover:active:border-[#38bdf8] transition-all font-sans ${
                           fieldErrors.occupation
                             ? 'border-rose-500/50 focus:border-rose-500 focus:ring-rose-500/30'
                             : 'border-[#1a2b40] focus:border-[#38bdf8] focus:ring-[#38bdf8]/50 hover:border-[#38bdf8]/50'
@@ -444,7 +444,7 @@ export const AuthModal = ({
                       value={educationQualification}
                       onChange={(e) => handleFieldChange('educationQualification', e.target.value)}
                       placeholder="e.g. Master's in Computer Science"
-                      className={`w-full bg-[#070e1a] border rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-[#f4f4f5] placeholder:text-[#475569] focus:outline-none focus:ring-1 focus:shadow-[0_0_20px_rgba(56,189,248,0.25)] hover:active:border-[#38bdf8] transition-all font-sans ${
+                      className={`w-full bg-[#070e1a] border rounded-xl px-4 pr-4 py-2.5 text-xs sm:text-sm text-[#f4f4f5] placeholder:text-[#475569] focus:outline-none focus:ring-1 focus:shadow-[0_0_20px_rgba(56,189,248,0.25)] hover:active:border-[#38bdf8] transition-all font-sans ${
                         fieldErrors.educationQualification
                           ? 'border-rose-500/50 focus:border-rose-500 focus:ring-rose-500/30'
                           : 'border-[#1a2b40] focus:border-[#38bdf8] focus:ring-[#38bdf8]/50 hover:border-[#38bdf8]/50'
@@ -464,7 +464,7 @@ export const AuthModal = ({
             {/* Email (for both login and signup) */}
             <div className="space-y-1">
               <label className="block text-[11px] font-mono text-[#94a3b8]">Email Address</label>
-              <div className="relative flex items-center group">
+              <div>
                 {/* <Mail className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" /> */}
                 <input
                   type="email"
@@ -472,7 +472,7 @@ export const AuthModal = ({
                   value={email}
                   onChange={(e) => handleFieldChange('email', e.target.value)}
                   placeholder="e.g. alex.vance@lucychat.ai"
-                  className={`w-full bg-[#070e1a] border rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm text-[#f4f4f5] placeholder:text-[#475569] focus:outline-none focus:ring-1 focus:shadow-[0_0_20px_rgba(56,189,248,0.25)] hover:active:border-[#38bdf8] transition-all font-sans ${
+                  className={`w-full bg-[#070e1a] border rounded-xl px-4 py-2.5 text-xs sm:text-sm text-[#f4f4f5] placeholder:text-[#475569] focus:outline-none focus:ring-1 focus:shadow-[0_0_20px_rgba(56,189,248,0.25)] hover:active:border-[#38bdf8] transition-all font-sans ${
                     fieldErrors.email
                       ? 'border-rose-500/50 focus:border-rose-500 focus:ring-rose-500/30'
                       : 'border-[#1a2b40] focus:border-[#38bdf8] focus:ring-[#38bdf8]/50 hover:border-[#38bdf8]/50'
@@ -490,7 +490,7 @@ export const AuthModal = ({
             {/* Password (for both login and signup) */}
             <div className="space-y-1">
               <label className="block text-[11px] font-mono text-[#94a3b8]">Password</label>
-              <div className="relative flex items-center group">
+              <div>
                 {/* <Lock className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" /> */}
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -498,7 +498,7 @@ export const AuthModal = ({
                   value={password}
                   onChange={(e) => handleFieldChange('password', e.target.value)}
                   placeholder={mode === 'signup' ? 'Create a secure password (min 8 chars)' : 'Enter your password'}
-                  className={`w-full bg-[#070e1a] border rounded-xl pl-10 pr-10 py-2.5 text-xs sm:text-sm text-[#f4f4f5] placeholder:text-[#475569] focus:outline-none focus:ring-1 focus:shadow-[0_0_20px_rgba(56,189,248,0.25)] hover:active:border-[#38bdf8] transition-all font-sans ${
+                  className={`w-full bg-[#070e1a] border rounded-xl px-4 pr-10 py-2.5 text-xs sm:text-sm text-[#f4f4f5] placeholder:text-[#475569] focus:outline-none focus:ring-1 focus:shadow-[0_0_20px_rgba(56,189,248,0.25)] hover:active:border-[#38bdf8] transition-all font-sans ${
                     fieldErrors.password
                       ? 'border-rose-500/50 focus:border-rose-500 focus:ring-rose-500/30'
                       : 'border-[#1a2b40] focus:border-[#38bdf8] focus:ring-[#38bdf8]/50 hover:border-[#38bdf8]/50'

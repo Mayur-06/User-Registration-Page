@@ -1,8 +1,6 @@
 """
 Standalone smoke test for the memory layer.
-Run from the Backend/ project root:
 
-    python test_memory.py
 
 Checks:
 1. Supabase client + credentials work

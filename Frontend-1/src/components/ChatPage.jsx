@@ -65,6 +65,7 @@ export const ChatPage = ({
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const mainInputRef = useRef(null);
+  const inFlight = useRef(new Set());
 
   const supportedMimeTypes = [
     'application/pdf',
@@ -127,40 +128,34 @@ export const ChatPage = ({
     loadDocuments();
   }, [loadConversations, loadDocuments]);
 
-  // Lazily fetch conversation messages when search query changes
+
+
+  // Fetch messages for conversations only when the user is actually searching
   useEffect(() => {
     if (!historySearch.trim()) return;
-    setConversationMessages((prev) => {
-      const updated = { ...prev };
-      conversations.forEach((c) => {
-        if (!updated[c.id]) {
-          updated[c.id] = null; // mark as pending fetch
-        }
-      });
-      return updated;
+
+    const pending = conversations.filter(
+      (c) => !conversationMessages[c.id] && !inFlight.current.has(c.id)
+    );
+    if (!pending.length) return;
+
+    pending.forEach((c) => inFlight.current.add(c.id));
+
+    Promise.all(
+      pending.map((c) =>
+        api.conversations
+          .getMessages(c.id)
+          .then((msgs) => [c.id, msgs || []])
+          .catch((err) => {
+            console.error('Failed to load conversation messages for search:', err);
+            return [c.id, []];
+          })
+          .finally(() => inFlight.current.delete(c.id))
+      )
+    ).then((entries) => {
+      setConversationMessages((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
     });
   }, [historySearch, conversations]);
-
-  // Fetch messages for conversations not yet loaded when searching
-  useEffect(() => {
-    conversations.forEach(async (c) => {
-      if (!conversationMessages[c.id]) {
-        try {
-          const msgs = await api.conversations.getMessages(c.id);
-          setConversationMessages((prev) => ({
-            ...prev,
-            [c.id]: msgs || [],
-          }));
-        } catch (err) {
-          console.error('Failed to load conversation messages for search:', err);
-          setConversationMessages((prev) => ({
-            ...prev,
-            [c.id]: [],
-          }));
-        }
-      }
-    });
-  }, [conversations, conversationMessages]);
 
   // Load messages for a selected conversation
   const handleSelectConversation = async (conversationId) => {
@@ -216,6 +211,7 @@ export const ChatPage = ({
     try {
       await api.documents.delete(filename);
       setBackendDocuments((prev) => prev.filter((d) => d !== filename));
+      setAttachedFiles((prev) => prev.filter((f) => f.name !== filename));
     } catch (err) {
       console.error('Failed to delete document:', err);
     }
@@ -437,96 +433,6 @@ export const ChatPage = ({
             </div>
           )}
 
-          {/* New Chat Button
-          <button
-            onClick={handleNewChat}
-            className={`w-full flex items-center justify-center gap-2.5 rounded-xl border border-[#1e293b] bg-[#0e1928] text-[#f4f4f5] font-semibold hover:bg-[#15273e] hover:border-[#38bdf8]/50 hover:shadow-[0_0_15px_rgba(56,189,248,0.15)] transition-all cursor-pointer mb-3 ${
-              sidebarCollapsed ? 'p-2.5' : 'px-4 py-2.5'
-            }`}
-            title="New Chat"
-            aria-label="New Chat"
-          >
-            <Plus className="w-4 h-4 text-[#38bdf8]" />
-            {!sidebarCollapsed && <span className="text-xs">New Chat</span>}
-          </button>
-
-          {/* Sidebar Nav Items */}
-          {/* <nav className="space-y-1.5">
-            <button
-              onClick={() => setActiveTab(activeTab === 'history' ? 'chat' : 'history')}
-              className={`w-full flex items-center gap-3 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                activeTab === 'history'
-                  ? 'bg-[#0d1726] text-[#38bdf8] border border-[#38bdf8]/30 shadow-[0_0_15px_rgba(56,189,248,0.08)]'
-                  : 'text-[#94a3b8] hover:text-[#f4f4f5] hover:bg-[#0e1928] border border-transparent'
-              } ${sidebarCollapsed ? 'justify-center p-2.5' : 'px-3 py-2'}`}
-              title="Conversations"
-              aria-label="Conversations"
-            >
-              <History className="w-4 h-4 shrink-0" />
-              {!sidebarCollapsed && <span>Conversations ({conversations.length})</span>}
-            </button>
-          </nav>
-        </div>
-
-        {/* History Drawer */}
-        {/* {!sidebarCollapsed && activeTab === 'history' && (
-          <div className="flex-1 px-4 py-2 overflow-y-auto border-t border-b border-[#1e293b]">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wider font-mono">
-                History
-              </span>
-              <span className="text-[10px] text-[#64748b] font-mono">{conversations.length} total</span>
-            </div> */}
-            {/* <div className="relative mb-3">
-              <Search className="w-3.5 h-3.5 text-[#64748b] absolute left-2.5 top-2.5" />
-              <input
-                type="text"
-                placeholder="Search conversations..."
-                value={historySearch}
-                onChange={(e) => setHistorySearch(e.target.value)}
-                className="w-full bg-[#050b14] border border-[#1e293b] rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-[#f4f4f5] focus:outline-none focus:border-[#38bdf8] font-sans"
-              />
-            </div>
-            {isLoadingConversations ? (
-              <div className="flex items-center justify-center py-6 text-xs text-[#94a3b8] gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-[#38bdf8]" />
-                <span>Loading conversations...</span>
-              </div>
-            ) : filteredConversations.length === 0 ? (
-              <div className="text-center py-6 text-xs text-[#64748b]">
-                No conversations yet. Start a chat!
-              </div>
-            ) : (
-              <div className="space-y-1 max-h-60 overflow-y-auto pr-1">
-                {filteredConversations.map((convo) => (
-                  <div */}
-                    {/* key={convo.id}
-                    onClick={() => handleSelectConversation(convo.id)}
-                    className={`w-full flex items-center justify-between p-2 rounded-lg text-xs transition-colors cursor-pointer group ${
-                      currentSessionId === convo.id
-                        ? 'bg-[#0e1928] text-[#38bdf8] border border-[#38bdf8]/30'
-                        : 'text-[#94a3b8] hover:bg-[#0e1928]/60 hover:text-[#f4f4f5]'
-                    }`}
-                  >
-                    <div className="min-w-0 flex-1 pr-2">
-                      <p className="font-medium truncate text-[#f4f4f5] group-hover:text-[#38bdf8]">
-                        {convo.title || 'Untitled Conversation'}
-                      </p>
-                      <span className="text-[10px] text-[#64748b] font-mono">
-                        {convo.created_at
-                          ? new Date(convo.created_at).toLocaleDateString()
-                          : 'Recent'}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => handleDeleteConversation(e, convo.id)}
-                      className="p-1 rounded text-[#64748b] hover:text-rose-400 hover:bg-[#1a0f14] transition-colors opacity-0 group-hover:opacity-100"
-                      title="Delete conversation"
-                    >
-                      <Trash2 className="w-3 h-3" />
-            
-        )} 
 
         {/* New Chat Button */}
           <button
@@ -588,7 +494,7 @@ export const ChatPage = ({
                 No conversations yet. Start a chat!
               </div>
             ) : (
-              <div className="space-y-1 pr-1">
+              <div className="space-y-1 pr-1 max-h-60 overflow-y-auto">
                 {filteredConversations.map((convo) => (
                   <div
                     key={convo.id}
@@ -674,37 +580,8 @@ export const ChatPage = ({
 
           {/* Buttons Section (Fixed at Bottom) */}
           <div className="p-3.5 space-y-2.5 shrink-0">
-            {/* {!sidebarCollapsed ? (
-              <button
-                onClick={onOpenUpgradeModal}
-                className="w-full py-2.5 rounded-xl bg-[#38bdf8] text-slate-950 font-bold text-xs hover:bg-[#38bdf8]/90 hover:shadow-[0_0_20px_rgba(56,189,248,0.4)] transition-all cursor-pointer flex items-center justify-center gap-2 border border-[#38bdf8]/50"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Upgrade to Pro</span>
-              </button>
-            ) : (
-              <button
-                onClick={onOpenUpgradeModal}
-                className="w-full p-2.5 rounded-xl bg-[#38bdf8] text-slate-950 font-bold hover:bg-[#38bdf8]/90 transition-all flex items-center justify-center cursor-pointer shadow-[0_0_15px_rgba(56,189,248,0.3)] border border-[#38bdf8]/50"
-                title="Upgrade to Pro"
-                aria-label="Upgrade to Pro"
-              >
-                <Sparkles className="w-4 h-4" />
-              </button>
-            )} */}
 
             <div className="space-y-1.5">
-              {/* <button
-                onClick={() => onNavigate('docs')}
-                className={`w-full flex items-center gap-3 rounded-lg text-xs text-[#94a3b8] hover:text-[#f4f4f5] hover:bg-[#0e1928] transition-colors cursor-pointer border border-transparent hover:border-[#1e293b] ${
-                  sidebarCollapsed ? 'justify-center p-2.5' : 'px-3 py-2'
-                }`}
-                title="Help & Support"
-                aria-label="Help & Support"
-              >
-                <HelpCircle className="w-4 h-4 shrink-0" />
-                {!sidebarCollapsed && <span>Help & Support</span>}
-              </button> */}
 
               <button
                 onClick={() => onNavigate('profile')}
@@ -967,7 +844,6 @@ export const ChatPage = ({
                       onClick={() => setAttachedFiles((prev) => prev.filter((f) => f.id !== file.id))}
                       className="text-[#94a3b8] hover:text-rose-400 ml-1 cursor-pointer"
                     >
-                      <X className="w-3 h-3" />
                     </button>
                   </div>
                 ))}

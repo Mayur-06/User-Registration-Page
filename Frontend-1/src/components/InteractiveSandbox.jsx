@@ -650,6 +650,7 @@ def csv_to_json(csv_path, json_path):
   ]);
 
   const chatContainerRef = useRef(null);
+  const responseTimeoutRef = useRef(null);
 
   useEffect(() => {
     chatContainerRef.current?.scrollTo({
@@ -657,6 +658,14 @@ def csv_to_json(csv_path, json_path):
       behavior: 'smooth',
     });
   }, [activeTab, docMessages, generalMessages, isTyping]);
+
+  useEffect(()=>{
+    return () =>{
+      if (responseTimeoutRef.current){
+        clearTimeout(responseTimeoutRef.current);
+      }
+    };
+  },[]);
 
   const handleSendMessage = (e) => {
     if (e) e.preventDefault();
@@ -677,10 +686,12 @@ def csv_to_json(csv_path, json_path):
 
     setIsTyping(true);
 
-    // Client-side instant reasoning generator
-    setTimeout(() => {
-      const aiResult = generateClientAIResponse(
-        userText,
+      if (responseTimeoutRef.current){
+        clearTimeout(responseTimeoutRef.current);
+        }
+        responseTimeoutRef.current = setTimeout(()=>{
+          const aiResult = generateClientAIResponse(
+            userText,
         [
           { id: '1', name: 'Contract_v3.pdf', size: '2.4 MB', type: 'pdf', icon: 'picture_as_pdf', color: '#ffb4ab' },
         ],
@@ -702,6 +713,7 @@ def csv_to_json(csv_path, json_path):
       else setGeneralMessages((prev) => [...prev, newBotMsg]);
 
       setIsTyping(false);
+      responseTimeoutRef.current = null;
     }, 450);
   };
 
@@ -726,7 +738,12 @@ def csv_to_json(csv_path, json_path):
             <span className="text-[#38bdf8]">canvas</span>
           </div>
 
-          <div className="w-12" />
+          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1e293b]/60 border border-[#334155] text-[9px] font-mono text-[#94a3b8] shrink-0">
+            <Sparkles className="w-2.5 h-2.5 text-[#38bdf8]" />
+            Simulated preview
+          </span>
+
+          <div className="w-12 sm:w-0" />
         </div>
 
         {/* Window Body Container */}

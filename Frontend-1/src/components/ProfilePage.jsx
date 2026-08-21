@@ -29,7 +29,7 @@ export const ProfilePage = ({
   onNavigate,
   onOpenUpgradeModal,
 }) => {
-  const { user: authUser, updateProfile, deleteAccount, logout } = useAuth();
+  const { user: authUser, updateProfile, deleteAccount, logout, setUser } = useAuth();
   const currentUser = authUser || propUser;
 
   // Personal Profile states
@@ -41,7 +41,7 @@ export const ProfilePage = ({
   );
   const [emailAddress, setEmailAddress] = useState(currentUser?.email || '');
   const [avatarUrl, setAvatarUrl] = useState(
-    currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+    currentUser?.profile_image_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
   );
 
   // Status and Confirmation States
@@ -69,6 +69,10 @@ export const ProfilePage = ({
         currentUser.education_qualification || currentUser.educationQualification || ''
       );
       setEmailAddress(currentUser.email || '');
+      setAvatarUrl(
+      currentUser.profile_image_url ||
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+    );
     }
   }, [currentUser]);
 
@@ -91,21 +95,38 @@ export const ProfilePage = ({
   }, []);
 
   // Handle Photo Change
-  const handlePhotoSelect = (e) => {
+  const handlePhotoSelect = async (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setAvatarUrl(reader.result);
-          if (onUpdateUser && currentUser) {
-            onUpdateUser({ ...currentUser, avatar: reader.result });
-          }
-          setSavedSuccess(true);
-          setTimeout(() => setSavedSuccess(false), 2500);
-        }
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setSaveError('Please upload a JPG, PNG, or WEBP image.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setSaveError('Image must be under 5MB.');
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const updated = await api.auth.uploadProfileImage(file);
+      setUser(updated);
+      setAvatarUrl(updated.profile_image_url);
+      if (onUpdateUser) {
+        onUpdateUser({ ...currentUser, ...updated, avatar: updated.profile_image_url });
+      }
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 2500);
+    } catch (err) {
+      console.error('Failed to upload profile photo:', err);
+      setSaveError(err.message || 'Failed to upload photo');
+    } finally {
+      setIsSaving(false);
+      e.target.value = '';
     }
   };
 

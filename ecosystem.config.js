@@ -3,8 +3,8 @@ module.exports = {
     {
       name: "backend",
       cwd: "./Backend",
-      script: "myvenv/Scripts/uvicorn.exe",
-      args: "app.main:app --reload --port 8000",
+      script: "myvenv/bin/uvicorn",
+      args: "app.main:app --port 8001",
       interpreter: "none",
     },
         {

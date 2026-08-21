@@ -8,7 +8,7 @@ class Gemini:
     Wrapper around Gemini for text generation.
     """
 
-    def __init__(self, model_name="gemini-2.5-flash"):
+    def __init__(self, model_name="gemini-3.6-flash"):
 
         load_dotenv()
 

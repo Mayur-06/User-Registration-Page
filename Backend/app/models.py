@@ -21,8 +21,9 @@ class UserResponse(BaseModel):
     occupation: str
     education_qualification: str
     email: EmailStr
+    profile_image_url: str | None = None
 
-    model_config = {"from_attributes": True}   # add this line
+    model_config = {"from_attributes": True}  
 
 class DeleteRequest(BaseModel):
     password: str
