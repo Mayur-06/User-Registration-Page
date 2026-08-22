@@ -1,5 +1,6 @@
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 
 
@@ -19,13 +20,12 @@ class Gemini:
                 "GEMINI_API_KEY not found in .env"
             )
 
-        genai.configure(api_key=api_key)
-
+        self.client = genai.Client(api_key=api_key)
         print(f"Loading Gemini model: {model_name}")
 
-        self.model = genai.GenerativeModel(model_name)
+        self.model_name = model_name
 
-        print("Gemini model loaded successfully!")
+        print(f"Gemini model loaded successfully! {model_name}")
 
     def generate(
         self,
@@ -42,11 +42,12 @@ Context and Question:
 {user_prompt}
 """
 
-        response = self.model.generate_content(
-            prompt,
-            generation_config=genai.GenerationConfig(
+        response = self.client.models.generate_content(
+            model=self.model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(
                 temperature=temperature,
-            )
+            ),
         )
 
         text = response.text.strip()

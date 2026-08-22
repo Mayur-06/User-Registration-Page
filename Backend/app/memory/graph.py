@@ -7,6 +7,10 @@ import logging
 from typing import TypedDict
 import datetime
 
+from google import genai
+from google.genai import types
+from pydantic import BaseModel
+
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.embeddings import Embeddings
 from langchain_community.vectorstores import SupabaseVectorStore
@@ -16,6 +20,21 @@ from app.rag.embedder import Embedder
 
 
 logger = logging.getLogger(__name__)
+
+
+class MemoryEvalResult(BaseModel):
+    should_save: bool
+    fact: str
+    confidence: float
+
+
+_genai_client: genai.Client | None = None
+
+def get_genai_client() -> genai.Client:
+    global _genai_client
+    if _genai_client is None:
+        _genai_client = genai.Client(api_key=_api_key())
+    return _genai_client
 
 def _api_key() -> str:
     key = os.environ["GEMINI_API_KEY"]
@@ -47,16 +66,16 @@ def _log_eval_decision(
     except Exception:
         logger.exception("failed to write memory eval log")
 
-_eval_llm: ChatGoogleGenerativeAI | None = None
+# _eval_llm: ChatGoogleGenerativeAI | None = None
 
-def get_eval_llm() -> ChatGoogleGenerativeAI:
-    global _eval_llm
-    if _eval_llm is None:
-        _eval_llm=ChatGoogleGenerativeAI(
-            model="gemini-3.6-flash",
-            google_api_key=_api_key()
-        )
-    return _eval_llm
+# def get_eval_llm() -> ChatGoogleGenerativeAI:
+#     global _eval_llm
+#     if _eval_llm is None:
+#         _eval_llm=ChatGoogleGenerativeAI(
+#             model="gemini-3.6-flash",
+#             google_api_key=_api_key()
+#         )
+#     return _eval_llm
 
 
 class LocalEmbeddingsAdapter(Embeddings):
@@ -122,6 +141,7 @@ def fetch_memories(user_id: str, question: str) -> list[str]:
 
 
 ## will be replacing the current evaluate_and_save_memory function with the commented out one, as current is for testing purpose
+
 # def evaluate_and_save_memory(user_id: str, question: str) -> None:
 #     """Runs as a background task after the response is already sent."""
 #     eval_prompt = f"""Determine if this message contains a durable personal fact
@@ -149,6 +169,8 @@ def fetch_memories(user_id: str, question: str) -> list[str]:
 #         except Exception:
 #             logger.exception("failed to save memory for user %s", user_id)
 
+
+
 def evaluate_and_save_memory(user_id: str, question: str) -> None:
     """Runs as a background task after the response is already sent."""
     eval_prompt = f"""Determine if this message contains a durable personal fact
@@ -162,60 +184,60 @@ to "right now" rather than "generally true about me."
 
 Examples:
 Message: "What's the weather like today?"
-{{"should_save": false, "fact": "", "confidence": 0.95}}
+should_save=false, fact="", confidence=0.95
 
 Message: "I'm a Python developer and I prefer dark mode in every app I use."
-{{"should_save": true, "fact": "Python developer, prefers dark mode", "confidence": 0.9}}
+should_save=true, fact="Python developer, prefers dark mode", confidence=0.9
 
 Message: "Ugh I hate Mondays."
-{{"should_save": false, "fact": "", "confidence": 0.6}}
+should_save=false, fact="", confidence=0.6
 
 Message: "I'm allergic to peanuts, keep that in mind for any recipes you give me."
-{{"should_save": true, "fact": "Allergic to peanuts", "confidence": 0.95}}
+should_save=true, fact="Allergic to peanuts", confidence=0.95
 
 Message: "Can you summarize this article for me?"
-{{"should_save": false, "fact": "", "confidence": 0.95}}
+should_save=false, fact="", confidence=0.95
 
 Message: "I've decided I'm switching careers into machine learning."
-{{"should_save": true, "fact": "Switching careers into machine learning", "confidence": 0.85}}
+should_save=true, fact="Switching careers into machine learning", confidence=0.85
 
-Now classify this message. Respond with ONLY valid JSON, no markdown fences:
+Now classify this message:
 
 Message: "{question}"
-{{"should_save": bool, "fact": "concise extracted fact, or empty string", "confidence": float between 0 and 1}}"""
+"""
 
     try:
-        raw = _extract_text(get_eval_llm().invoke(eval_prompt).content).strip()
-        print(f"[MEMORY DEBUG] raw eval response: {raw!r}")
-        raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-        parsed = json.loads(raw)
+        response = get_genai_client().models.generate_content(
+            model="gemini-3.6-flash",
+            contents=eval_prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=MemoryEvalResult,
+            ),
+        )
+        parsed: MemoryEvalResult = response.parsed
     except Exception as e:
-        logger.warning("memory eval failed or returned non-JSON for user %s", user_id)
-        print(f"[MEMORY DEBUG] exception: {e!r}")
+        logger.warning("memory eval failed for user %s: %r", user_id, e)
         _log_eval_decision(user_id, question, "eval_failed")
         return
 
-    should_save = bool(parsed.get("should_save", False))
-    fact = parsed.get("fact", "")
-    confidence = float(parsed.get("confidence", 0.0))
-
-    if not (should_save and fact):
-        _log_eval_decision(user_id, question, "skipped_by_model", fact, confidence)
+    if not (parsed.should_save and parsed.fact):
+        _log_eval_decision(user_id, question, "skipped_by_model", parsed.fact, parsed.confidence)
         return
 
-    if confidence < MEMORY_EVAL_THRESHOLD:
+    if parsed.confidence < MEMORY_EVAL_THRESHOLD:
         logger.info(
             "memory eval below threshold for user %s (confidence=%.2f): %r — skipped",
-            user_id, confidence, fact,
+            user_id, parsed.confidence, parsed.fact,
         )
-        _log_eval_decision(user_id, question, "skipped_by_threshold", fact, confidence)
+        _log_eval_decision(user_id, question, "skipped_by_threshold", parsed.fact, parsed.confidence)
         return
 
     try:
         get_vector_store().add_texts(
-            [fact], metadatas=[{"user_id": user_id}],
+            [parsed.fact], metadatas=[{"user_id": user_id}],
         )
-        _log_eval_decision(user_id, question, "saved", fact, confidence)
+        _log_eval_decision(user_id, question, "saved", parsed.fact, parsed.confidence)
     except Exception:
         logger.exception("failed to save memory for user %s", user_id)
-        _log_eval_decision(user_id, question, "save_failed", fact, confidence)
+        _log_eval_decision(user_id, question, "save_failed", parsed.fact, parsed.confidence)

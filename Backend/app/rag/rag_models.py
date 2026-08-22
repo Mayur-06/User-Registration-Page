@@ -3,12 +3,12 @@ from pydantic import BaseModel
 
 class ChatRequest(BaseModel):
     question: str
-    # provider: str
-    # api_key: str
+
 
 
 class ChatResponse(BaseModel):
     answer: str
+    sources_used: list[str] = []
 
 
 class HealthResponse(BaseModel):

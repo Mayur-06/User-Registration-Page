@@ -16,6 +16,7 @@ from app.db import get_db
 from app.memory.graph import fetch_memories, evaluate_and_save_memory
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.rag.supabase_document_store import SupabaseDocumentStore
+from app.memory.graph import fetch_memories
 
 router = APIRouter()
 
@@ -40,6 +41,8 @@ def get_rag_for_user(user_id: str) -> RAGPipeline:
         embedder=shared["embedder"],
         generator=shared["generator"],
         faiss_manager=faiss_manager,
+        user_id=user_id,
+        fetch_memories_fn=fetch_memories,
     )
 
 
@@ -60,14 +63,14 @@ async def chat(
         raise HTTPException(status_code=404, detail="Conversation not found")
 
     await add_message(db, request.conversation_id, "user", request.question)
-    memories = fetch_memories(user_id, request.question)
+    #memories = fetch_memories(user_id, request.question)
 
     rag = get_rag_for_user(user_id)
-    answer = rag.ask(question=request.question, user_memories=memories)
+    result = rag.ask(question=request.question)
 
-    await add_message(db, request.conversation_id, "bot", answer)
+    await add_message(db, request.conversation_id, "bot", result.answer)
     background_tasks.add_task(evaluate_and_save_memory, user_id, request.question)
-    return ChatResponse(answer=answer)
+    return ChatResponse(answer=result.answer, sources_used=result.sources_used)
 
 @router.post("/documents/upload")
 async def upload_document(file: UploadFile = File(...), user_id: str = Depends(get_current_user_id)):
