@@ -37,7 +37,7 @@ export const Footer = ({ onNavigate }) => {
               />
             </div>
             <p className="text-xs text-on-surface-variant leading-relaxed max-w-sm">
-              Subscribe to model releases, benchmark updates, and modal engine changelogs.
+              Subscribe to model releases, benchmark updates, and multi-modal engine changelogs.
             </p>
 
             <form onSubmit={handleSubscribe} className="flex items-center gap-2 pt-1 max-w-sm">

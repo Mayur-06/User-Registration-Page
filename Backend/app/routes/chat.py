@@ -1,21 +1,19 @@
 from pathlib import Path
 import uuid 
 import shutil
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, BackgroundTasks
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from pydantic import BaseModel
 from app.rag.pipeline import RAGPipeline
 from app.rag.textchunker import TextChunker
-
+from app.rag.faiss_manager import FAISSManager
 from app.rag.embedder import Embedder
 from app.rag.generator import Generator
 from app.rag.document_loader import DocumentLoader
-from app.rag.rag_models import ChatResponse
+from app.rag.rag_models import ChatRequest, ChatResponse
 from app.routes.user import get_current_user_id  # wherever you settled this after the earlier cleanup
 from app.crud import add_message, get_conversation
 from app.db import get_db
-from app.memory.graph import fetch_memories, evaluate_and_save_memory
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.rag.supabase_document_store import SupabaseDocumentStore
 
 router = APIRouter()
 
@@ -34,7 +32,7 @@ def get_shared_components():
 
 def get_rag_for_user(user_id: str) -> RAGPipeline:
     shared = get_shared_components()
-    faiss_manager = SupabaseDocumentStore(shared["embedder"], user_id=user_id)
+    faiss_manager = FAISSManager(shared["embedder"], user_id=user_id)
     return RAGPipeline(
         chunker=shared["chunker"],
         embedder=shared["embedder"],
@@ -42,6 +40,12 @@ def get_rag_for_user(user_id: str) -> RAGPipeline:
         faiss_manager=faiss_manager,
     )
 
+
+# @router.post("/chat", response_model=ChatResponse)
+# def chat(request: ChatRequest, user_id: str = Depends(get_current_user_id)):
+#     rag = get_rag_for_user(user_id)
+#     answer = rag.ask(question=request.question)
+#     return ChatResponse(answer=answer)
 
 class ChatRequestWithConvo(BaseModel):
     question: str
@@ -51,7 +55,6 @@ class ChatRequestWithConvo(BaseModel):
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
     request: ChatRequestWithConvo,
-    background_tasks: BackgroundTasks,
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
@@ -60,13 +63,12 @@ async def chat(
         raise HTTPException(status_code=404, detail="Conversation not found")
 
     await add_message(db, request.conversation_id, "user", request.question)
-    memories = fetch_memories(user_id, request.question)
 
     rag = get_rag_for_user(user_id)
-    answer = rag.ask(question=request.question, user_memories=memories)
+    answer = rag.ask(question=request.question)
 
     await add_message(db, request.conversation_id, "bot", answer)
-    background_tasks.add_task(evaluate_and_save_memory, user_id, request.question)
+
     return ChatResponse(answer=answer)
 
 @router.post("/documents/upload")

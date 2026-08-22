@@ -131,58 +131,25 @@ class DocumentLoader:
         return cleaned_pages
 
     def load(self):
-        path_lower = self.pdf_path.lower()
-
-        if path_lower.endswith(".pdf"):
-            return self._load_pdf()
-        elif path_lower.endswith(".txt"):
-            return self._load_txt()
-        elif path_lower.endswith(".csv"):
-            return self._load_csv()
-        elif path_lower.endswith(".docx"):
-            return self._load_docx()
-        elif path_lower.endswith(".doc"):
+        if not self.pdf_path.lower().endswith(".pdf"):
             raise ValueError(
-                "Legacy .doc files are not supported. Please save as .docx and re-upload."
-            )
-        else:
-            raise ValueError(
-                f"Unsupported file type. Got: {self.pdf_path}"
+                f"DocumentLoader only supports PDF files. Got: {self.pdf_path}"
             )
 
-    def _load_pdf(self):
         pdf = fitz.open(self.pdf_path)
+
         pages = []
+
         for page in pdf:
             pages.append(page.get_text())
+
         pdf.close()
 
         pages = self.remove_headers_footers(pages)
 
         document = ""
+
         for page in pages:
             document += self.clean_text(page) + "\n\n"
 
         return document
-
-    def _load_txt(self):
-        with open(self.pdf_path, "r", encoding="utf-8", errors="replace") as f:
-            text = f.read()
-        return self.clean_text(text)
-
-    def _load_csv(self):
-        import csv
-        rows = []
-        with open(self.pdf_path, "r", encoding="utf-8", errors="replace", newline="") as f:
-            reader = csv.reader(f)
-            for row in reader:
-                rows.append(", ".join(row))
-        text = "\n".join(rows)
-        return self.clean_text(text)
-
-    def _load_docx(self):
-        from docx import Document as DocxDocument
-        doc = DocxDocument(self.pdf_path)
-        paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
-        text = "\n".join(paragraphs)
-        return self.clean_text(text)

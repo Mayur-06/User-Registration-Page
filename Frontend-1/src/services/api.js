@@ -2,13 +2,7 @@
  * Centralized API Service for connecting Frontend-1 to the FastAPI Backend
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL?.replace(/\/$/,'');
-
-if (!API_BASE_URL) {
-  throw new Error(
-    'VITE_API_URL is not set. Configure VITE_API_URL before building the frontend.'
-  );
-}
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const TOKEN_STORAGE_KEY = 'access_token';
 
@@ -211,16 +205,6 @@ export const api = {
       });
     },
 
-    uploadProfileImage: async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    return await request('/me/profile-image', {
-      method: 'POST',
-      body: formData,
-    });
-  },
-
     deleteMe: async () => {
       const res = await request('/me', { method: 'DELETE' });
       clearAccessToken();
@@ -292,12 +276,6 @@ export const api = {
       return await request('/health', { method: 'GET' });
     },
   },
-  supabase_health: {
-    check: async () => {
-      return await request('/supabase_health', { method: 'GET' });
-    },
-  },
 };
-
 
 export default api;

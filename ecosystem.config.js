@@ -3,16 +3,16 @@ module.exports = {
     {
       name: "backend",
       cwd: "./Backend",
-      script: "myvenv/bin/uvicorn",
-      args: "app.main:app --port 8001",
+      script: "myvenv/Scripts/uvicorn.exe",
+      args: "app.main:app --reload --port 8000",
       interpreter: "none",
     },
-        {
+    {
       name: "frontend",
       cwd: "./Frontend-1",
-      script: "npm",
-      args: "run dev",
+      script: "cmd",
+      args: '/c "npm run dev"',
       interpreter: "none",
-    }
+    },
   ],
 };

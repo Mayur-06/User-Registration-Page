@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth import hash_password, verify_password, create_access_token, generate_refresh_token, hash_token
 from app.models import LoginRequest, SignupRequest, UserResponse
 from app.db import get_db
-from app.crud import get_user_by_email, create_user, store_refresh_token, get_valid_refresh_token, revoke_refresh_token
+from app.crud import get_user_by_email, create_user, store_refresh_token, get_valid_refresh_token, revoke_refresh_token, get_user_by_id
 
 
 router = APIRouter()

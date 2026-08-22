@@ -67,6 +67,15 @@ export const HeroSection = ({ onTryFree, onWatchDemo }) => {
             <span>Try for Free</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
+
+          {/* Secondary Ghost CTA Button */}
+          <button
+            onClick={onWatchDemo}
+            className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#09090b]/80 hover:bg-[#1e293b]/60 text-[#f4f4f5] border border-[#1e293b] hover:border-[#38bdf8]/40 backdrop-blur-md font-medium text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+          >
+            <Play className="w-4 h-4 text-[#38bdf8] fill-[#38bdf8]/20" />
+            <span>Watch Demo</span>
+          </button>
         </div>
 
         {/* Micro-copy beneath CTAs */}

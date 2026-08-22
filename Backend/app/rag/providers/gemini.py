@@ -8,7 +8,7 @@ class Gemini:
     Wrapper around Gemini for text generation.
     """
 
-    def __init__(self, model_name="gemini-3.6-flash"):
+    def __init__(self, model_name="gemini-2.5-flash"):
 
         load_dotenv()
 
@@ -49,7 +49,4 @@ Context and Question:
             )
         )
 
-        text = response.text.strip()
-        if isinstance(text, bytes):
-            text = text.decode("utf-8", errors="replace")
-        return text
+        return response.text.strip()

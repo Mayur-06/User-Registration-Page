@@ -69,7 +69,7 @@ export const Navbar = ({
             Features
           </button>
 
-          {/* <button
+          <button
             onClick={() => handleNavClick('pricing')}
             className={`text-sm font-medium transition-colors duration-200 cursor-pointer ${
               currentView === 'pricing'
@@ -78,7 +78,18 @@ export const Navbar = ({
             }`}
           >
             Pricing
-          </button> */}
+          </button>
+
+          <button
+            onClick={() => handleNavClick('docs')}
+            className={`text-sm font-medium transition-colors duration-200 cursor-pointer ${
+              currentView === 'docs'
+                ? 'text-primary-container font-semibold'
+                : 'text-on-surface-variant hover:text-on-background'
+            }`}
+          >
+            Docs
+          </button>
 
           <button
             onClick={() => handleNavClick('faq')}
@@ -91,6 +102,9 @@ export const Navbar = ({
           >
             <HelpCircle className="w-4 h-4 text-tertiary" />
             <span>FAQ</span>
+            {/* <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-[#2fd9f4]/10 text-[#2fd9f4] border border-[#2fd9f4]/30 hidden lg:inline">
+              Guide
+            </span> */}
           </button>
         </nav>
 
