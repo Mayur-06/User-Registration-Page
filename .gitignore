@@ -10,7 +10,7 @@ myvenv
 documents/
 indexes/
 terminal.log
-backend.log
+Backend/backend.log
 Backend/app/data/users.json
 __pycache__/
 *.pyc
@@ -20,3 +20,4 @@ Backend/app/data/*.json
 Backend/app/memory/memory_eval_log.jsonl
 Backend/app/memory/memory_eval_log1.jsonl
 Backend/temp_uploads/
+Backend/app/rag/pipeline_usage_log.jsonl

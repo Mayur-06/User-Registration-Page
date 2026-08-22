@@ -95,7 +95,6 @@ export default function LiquidEther({
         this.renderer.domElement.style.height = '100%';
         this.renderer.domElement.style.display = 'block';
         this.timer = new THREE.Clock();
-        this.timer.start();
       }
       resize() {
         if (!this.container) return;

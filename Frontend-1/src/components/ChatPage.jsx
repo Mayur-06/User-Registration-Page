@@ -21,6 +21,8 @@ import {
   Trash2,
   Loader2,
   Database,
+  User,
+  Globe,
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { INITIAL_CONTEXT_FILES } from '../data/mockData';
@@ -276,6 +278,7 @@ export const ChatPage = ({
         id: `bot-${Date.now()}`,
         sender: 'assistant',
         text: response.answer || 'I could not generate an answer for this query.',
+        sources_used: response.sources_used || [],
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
@@ -784,6 +787,28 @@ export const ChatPage = ({
                     <div className="text-xs sm:text-sm leading-relaxed whitespace-pre-line space-y-3 font-sans">
                       {msg.text}
                     </div>
+
+                    {msg.sender === 'assistant' &&
+                      msg.sources_used &&
+                      msg.sources_used.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-3 pt-2.5 border-t border-[#1e293b]/60">
+                          {msg.sources_used.includes('search_memories') && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0e1928] border border-[#1e293b] text-[10px] text-[#94a3b8]">
+                              <User className="w-3 h-3" /> From memory
+                            </span>
+                          )}
+                          {msg.sources_used.includes('search_documents') && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0e1928] border border-[#1e293b] text-[10px] text-[#94a3b8]">
+                              <FileText className="w-3 h-3" /> From your documents
+                            </span>
+                          )}
+                          {msg.sources_used.includes('google_search') && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0e1928] border border-[#1e293b] text-[10px] text-[#94a3b8]">
+                              <Globe className="w-3 h-3" /> Web search
+                            </span>
+                          )}
+                        </div>
+                      )}
                   </div>
 
                   {msg.sender === 'user' && (
