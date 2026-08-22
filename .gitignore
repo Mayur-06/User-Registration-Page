@@ -2,14 +2,21 @@
 .DS_Store
 Thumbs.db
 
-.env
-myenv/
 __pycache__/
 *.pyc
 indexes/
 documents/
 myvenv
-.venv
 documents/
 indexes/
 terminal.log
+backend.log
+Backend/app/data/users.json
+__pycache__/
+*.pyc
+Backend/app/data/*.json
+.pytest_cache/
+.env
+Backend/app/memory/memory_eval_log.jsonl
+Backend/app/memory/memory_eval_log1.jsonl
+Backend/temp_uploads/

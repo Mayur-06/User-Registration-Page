@@ -2,7 +2,6 @@ from app.rag.embedder import Embedder
 # from search_index import SearchIndex
 from app.rag.generator import Generator
 from app.rag.textchunker import TextChunker
-from app.rag.faiss_manager import FAISSManager
 
 class RAGPipeline:
 
@@ -19,7 +18,7 @@ class RAGPipeline:
         self.chunker = chunker
         self.generator = generator
 
-    def ask(self, question:str):
+    def ask(self, question:str, user_memories: list[str] | None = None):
 
         query_embedding = self.embedder.encode(question)
 
@@ -31,8 +30,9 @@ class RAGPipeline:
         context = "\n\n".join(
             chunk["text"] for chunk in retrieved_chunks
         )
+        memory_block = "\n".join(f"- {m}" for m in user_memories) if user_memories else "None known yet."
 
-        system_prompt = """
+        system_prompt = f"""
 You are a helpful and conversational AI assistant.
 
 You have access to documents uploaded by the user. Use the document
@@ -61,7 +61,8 @@ Follow these rules:
 
 6. Be conversational, concise, and helpful.
 
-Document context:
+Known facts about this user:
+{memory_block}
 """
 
         user_prompt = f"""

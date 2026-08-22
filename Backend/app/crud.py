@@ -1,24 +1,3 @@
-# import json, os, tempfile
-# from threading import Lock
-
-# DATA_FILE = "app/data/users.json"
-# _lock = Lock()
-
-# def read_users()->dict:
-#     if not os.path.exists(DATA_FILE):
-#         return {}
-#     with open(DATA_FILE, "r") as f:
-#         return json.load(f)
-
-# def write_users(users: dict):
-#     with _lock:
-#         dir_ = os.path.dirname(DATA_FILE)
-#         fd, tmp_path = tempfile.mkstemp(dir=dir_)
-#         with os.fdopen(fd, "w") as f:
-#             json.dump(users, f, indent=2)
-#         os.replace(tmp_path, DATA_FILE) 
-
-
 import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

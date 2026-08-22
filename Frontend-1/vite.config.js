@@ -13,44 +13,49 @@ export default defineConfig(() => {
     },
     server: {
       host: '0.0.0.0',
-      port: 5173,
+      port: 5176,
+      strictPort: true,
       hmr: process.env.DISABLE_HMR !== 'true',
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
       proxy: {
         '/signup': {
-          target: 'http://localhost:8000',
+          target: 'http://localhost:8001',
           changeOrigin: true,
         },
         '/login': {
-          target: 'http://localhost:8000',
+          target: 'http://localhost:8001',
           changeOrigin: true,
         },
         '/refresh': {
-          target: 'http://localhost:8000',
+          target: 'http://localhost:8001',
           changeOrigin: true,
         },
         '/logout': {
-          target: 'http://localhost:8000',
+          target: 'http://localhost:8001',
           changeOrigin: true,
         },
         '/me': {
-          target: 'http://localhost:8000',
+          target: 'http://localhost:8001',
           changeOrigin: true,
         },
         '/chat': {
-          target: 'http://localhost:8000',
+          target: 'http://localhost:8001',
           changeOrigin: true,
         },
         '/conversations': {
-          target: 'http://localhost:8000',
+          target: 'http://localhost:8001',
           changeOrigin: true,
         },
         '/documents': {
-          target: 'http://localhost:8000',
+          target: 'http://localhost:8001',
           changeOrigin: true,
         },
         '/health': {
-          target: 'http://localhost:8000',
+          target: 'http://localhost:8001',
+          changeOrigin: true,
+        },
+        '/supabase-health': {
+          target: 'http://localhost:8001',
           changeOrigin: true,
         },
       },

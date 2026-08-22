@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Sparkles, Shield, Zap } from 'lucide-react';
+import { ArrowRight, Sparkles, Zap } from 'lucide-react';
 
 export const CallToAction = ({ onGetStarted }) => {
   return (
@@ -49,11 +49,6 @@ export const CallToAction = ({ onGetStarted }) => {
             <div className="flex items-center gap-1.5">
               <Zap className="w-3.5 h-3.5 text-primary-container" />
               <span>No credit card required</span>
-            </div>
-            <span className="text-[#1e293b] hidden sm:inline">•</span>
-            <div className="flex items-center gap-1.5">
-              <Shield className="w-3.5 h-3.5 text-primary-container" />
-              <span>SOC-2 Type II Certified</span>
             </div>
             <span className="text-[#1e293b] hidden sm:inline">•</span>
             <div className="flex items-center gap-1.5">

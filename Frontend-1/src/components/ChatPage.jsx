@@ -59,9 +59,13 @@ export const ChatPage = ({
   const [historySearch, setHistorySearch] = useState('');
   const [uploadFeedback, setUploadFeedback] = useState(null);
 
+  // Cache for conversation messages: conversationId -> messages array
+  const [conversationMessages, setConversationMessages] = useState({});
+
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const mainInputRef = useRef(null);
+  const inFlight = useRef(new Set());
 
   const supportedMimeTypes = [
     'application/pdf',
@@ -124,6 +128,35 @@ export const ChatPage = ({
     loadDocuments();
   }, [loadConversations, loadDocuments]);
 
+
+
+  // Fetch messages for conversations only when the user is actually searching
+  useEffect(() => {
+    if (!historySearch.trim()) return;
+
+    const pending = conversations.filter(
+      (c) => !conversationMessages[c.id] && !inFlight.current.has(c.id)
+    );
+    if (!pending.length) return;
+
+    pending.forEach((c) => inFlight.current.add(c.id));
+
+    Promise.all(
+      pending.map((c) =>
+        api.conversations
+          .getMessages(c.id)
+          .then((msgs) => [c.id, msgs || []])
+          .catch((err) => {
+            console.error('Failed to load conversation messages for search:', err);
+            return [c.id, []];
+          })
+          .finally(() => inFlight.current.delete(c.id))
+      )
+    ).then((entries) => {
+      setConversationMessages((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+    });
+  }, [historySearch, conversations]);
+
   // Load messages for a selected conversation
   const handleSelectConversation = async (conversationId) => {
     setCurrentSessionId(conversationId);
@@ -178,6 +211,7 @@ export const ChatPage = ({
     try {
       await api.documents.delete(filename);
       setBackendDocuments((prev) => prev.filter((d) => d !== filename));
+      setAttachedFiles((prev) => prev.filter((f) => f.name !== filename));
     } catch (err) {
       console.error('Failed to delete document:', err);
     }
@@ -325,9 +359,22 @@ export const ChatPage = ({
     handleFileUpload(e);
   };
 
-  const filteredConversations = conversations.filter((c) =>
-    (c.title || '').toLowerCase().includes(historySearch.toLowerCase())
-  );
+  const filteredConversations = conversations.filter((c) => {
+    // Check title match
+    const titleMatch = (c.title || '').toLowerCase().includes(historySearch.toLowerCase());
+    
+    // Check content match - fetch messages if not loaded yet
+    const messages = conversationMessages[c.id];
+    const hasMessages = !!messages;
+    const contentMatch = !hasMessages
+      ? false // will be re-checked after fetch completes
+      : (messages.length > 0 && 
+          messages.some((msg) => 
+            (msg.text || '').toLowerCase().includes(historySearch.toLowerCase())
+          ));
+    
+    return titleMatch || contentMatch;
+  });
 
   return (
     <div
@@ -386,10 +433,11 @@ export const ChatPage = ({
             </div>
           )}
 
-          {/* New Chat Button */}
+
+        {/* New Chat Button */}
           <button
             onClick={handleNewChat}
-            className={`w-full flex items-center justify-center gap-2.5 rounded-xl border border-[#1e293b] bg-[#0e1928] text-[#f4f4f5] font-semibold hover:bg-[#15273e] hover:border-[#38bdf8]/50 hover:shadow-[0_0_15px_rgba(56,189,248,0.15)] transition-all cursor-pointer mb-3 ${
+            className={`w-full flex items-center justify-center gap-2.5 rounded-xl border border-[#1e293b] bg-[#0e1928] text-[#f4f4f5] font-semibold hover:bg-[#15273e] hover:border-[#38bdf8]/50 hover:shadow-[0_0_15px_rgba(56,189,248,0.15)] transition-all cursor-pointer mt-6 mb-3 ${
               sidebarCollapsed ? 'p-2.5' : 'px-4 py-2.5'
             }`}
             title="New Chat"
@@ -422,18 +470,18 @@ export const ChatPage = ({
           <div className="flex-1 px-4 py-2 overflow-y-auto border-t border-b border-[#1e293b]">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wider font-mono">
-                PostgreSQL History
+                History
               </span>
               <span className="text-[10px] text-[#64748b] font-mono">{conversations.length} total</span>
             </div>
             <div className="relative mb-3">
-              <Search className="w-3.5 h-3.5 text-[#64748b] absolute left-2.5 top-2.5" />
+              {/* <Search className="w-3.5 h-3.5 text-[#64748b] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" /> */}
               <input
                 type="text"
                 placeholder="Search conversations..."
                 value={historySearch}
                 onChange={(e) => setHistorySearch(e.target.value)}
-                className="w-full bg-[#050b14] border border-[#1e293b] rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-[#f4f4f5] focus:outline-none focus:border-[#38bdf8] font-sans"
+                className="w-full bg-[#050b14] border border-[#1e293b] rounded-lg pl-9 pr-2.5 py-1.5 text-xs text-[#f4f4f5] focus:outline-none focus:border-[#38bdf8] font-sans"
               />
             </div>
             {isLoadingConversations ? (
@@ -446,7 +494,7 @@ export const ChatPage = ({
                 No conversations yet. Start a chat!
               </div>
             ) : (
-              <div className="space-y-1 max-h-60 overflow-y-auto pr-1">
+              <div className="space-y-1 pr-1 max-h-60 overflow-y-auto">
                 {filteredConversations.map((convo) => (
                   <div
                     key={convo.id}
@@ -481,6 +529,7 @@ export const ChatPage = ({
             )}
           </div>
         )}
+
 
         {/* Bottom Sidebar: Documents, Upgrade to Pro & Settings */}
         <div className="flex flex-col border-t border-[#1e293b] h-0 flex-1 overflow-hidden">
@@ -531,37 +580,8 @@ export const ChatPage = ({
 
           {/* Buttons Section (Fixed at Bottom) */}
           <div className="p-3.5 space-y-2.5 shrink-0">
-            {!sidebarCollapsed ? (
-              <button
-                onClick={onOpenUpgradeModal}
-                className="w-full py-2.5 rounded-xl bg-[#38bdf8] text-slate-950 font-bold text-xs hover:bg-[#38bdf8]/90 hover:shadow-[0_0_20px_rgba(56,189,248,0.4)] transition-all cursor-pointer flex items-center justify-center gap-2 border border-[#38bdf8]/50"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Upgrade to Pro</span>
-              </button>
-            ) : (
-              <button
-                onClick={onOpenUpgradeModal}
-                className="w-full p-2.5 rounded-xl bg-[#38bdf8] text-slate-950 font-bold hover:bg-[#38bdf8]/90 transition-all flex items-center justify-center cursor-pointer shadow-[0_0_15px_rgba(56,189,248,0.3)] border border-[#38bdf8]/50"
-                title="Upgrade to Pro"
-                aria-label="Upgrade to Pro"
-              >
-                <Sparkles className="w-4 h-4" />
-              </button>
-            )}
 
             <div className="space-y-1.5">
-              <button
-                onClick={() => onNavigate('docs')}
-                className={`w-full flex items-center gap-3 rounded-lg text-xs text-[#94a3b8] hover:text-[#f4f4f5] hover:bg-[#0e1928] transition-colors cursor-pointer border border-transparent hover:border-[#1e293b] ${
-                  sidebarCollapsed ? 'justify-center p-2.5' : 'px-3 py-2'
-                }`}
-                title="Help & Support"
-                aria-label="Help & Support"
-              >
-                <HelpCircle className="w-4 h-4 shrink-0" />
-                {!sidebarCollapsed && <span>Help & Support</span>}
-              </button>
 
               <button
                 onClick={() => onNavigate('profile')}
@@ -824,7 +844,6 @@ export const ChatPage = ({
                       onClick={() => setAttachedFiles((prev) => prev.filter((f) => f.id !== file.id))}
                       className="text-[#94a3b8] hover:text-rose-400 ml-1 cursor-pointer"
                     >
-                      <X className="w-3 h-3" />
                     </button>
                   </div>
                 ))}
