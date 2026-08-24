@@ -177,6 +177,13 @@ def evaluate_and_save_memory(user_id: str, question: str) -> None:
 or preference worth remembering long-term about the user — something true across
 many future conversations, not just relevant to this one exchange.
 
+Note: the message may include a description of an image the user shared
+(e.g. "the assistant's response, which may describe an uploaded image").
+Extract facts from visual content the same way you would from text — for
+example, if an image shows the user's workspace, pet, or a document with
+their name on it, and that reveals a durable fact, extract it as you would
+from a text statement.
+
 Durable facts: name, occupation, skills, long-term goals, stable likes/dislikes,
 ongoing constraints (allergies, timezone, tools they use regularly).
 NOT durable: one-off questions, requests, transient moods, or anything scoped

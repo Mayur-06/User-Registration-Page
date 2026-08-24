@@ -24,8 +24,10 @@ supabase
 pydantic
 langchain-core
 pgvector
+sqlalchemy-paradedb
 langgraph 
 langchain-google-genai 
 langchain-community
 cloudinary
 google-genai
+Pillow

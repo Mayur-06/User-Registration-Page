@@ -2,16 +2,28 @@ import time
 import json
 import logging
 import os
+import uuid
 from datetime import datetime, timezone
 from google import genai
 from google.genai import types
 from pydantic import BaseModel
 import time as time_module
+from app.crud import get_messages
 
 
 logger = logging.getLogger(__name__)
 
 PIPELINE_LOG_PATH = os.path.join(os.path.dirname(__file__), "pipeline_usage_log.jsonl")
+DOCUMENT_SEARCH_LOG_PATH = os.path.join(os.path.dirname(__file__), "document_search_log.jsonl")
+
+MAX_CONTEXT_WINDOW = 1_048_576  # 1M tokens — adjust to match the active Gemini model window
+CONTEXT_TARGET_RATIO = 0.8
+TOOL_OUTPUT_BUFFER = 4000       # reserve space for potential tool outputs during the turn
+IMAGE_TOKEN_ESTIMATE = 258
+RECENT_TURNS_TO_PRESERVE = 4
+SUMMARY_MODEL = "gemini-3.6-flash"
+
+_conversation_summaries: dict[str, str] = {}
 
 class ChatAnswer(BaseModel):
     answer: str
@@ -28,9 +40,9 @@ def _log_pipeline_usage(
     entry = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "user_id": user_id,
-        "question": question[:200],  # truncate — this is a usage log, not a transcript
+        "question": question[:200],
         "round_trips": round_trips,
-        "tool_calls": tool_calls,      # e.g. {"search_memories": 1, "google_search": 1}
+        "tool_calls": tool_calls,
         "elapsed_seconds": round(elapsed_seconds, 2),
         "hit_cap": hit_cap,
     }
@@ -38,7 +50,37 @@ def _log_pipeline_usage(
         with open(PIPELINE_LOG_PATH, "a") as f:
             f.write(json.dumps(entry) + "\n")
     except Exception:
-        logger.exception("failed to write pipeline usage log")       
+        logger.exception("failed to write pipeline usage log")
+
+
+def _log_document_search(
+    user_id: str,
+    question: str,
+    results: list[dict],
+) -> None:
+    entry = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "user_id": user_id,
+        "question": question[:200],
+        "chunks_count": len(results),
+        "chunks": [
+            {
+                "chunk_id": r.get("chunk_id"),
+                "doc_id": r.get("doc_id"),
+                "rank": r.get("rank"),
+                "rrf_score": r.get("score"),
+                "bm25_score": r.get("bm25_score"),
+                "similarity": r.get("similarity"),
+                "text": r.get("text", "")[:500],
+            }
+            for r in results
+        ],
+    }
+    try:
+        with open(DOCUMENT_SEARCH_LOG_PATH, "a") as f:
+            f.write(json.dumps(entry) + "\n")
+    except Exception:
+        logger.exception("failed to write document search log")       
 
 class ToolRelevance(BaseModel):
     needs_memory: bool
@@ -57,6 +99,101 @@ class RAGPipeline:
         self.fetch_memories_fn = fetch_memories_fn
 
         self._client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+
+    def _count_tokens(self, text: str) -> int:
+        try:
+            return self.generator.count_tokens(text)
+        except Exception:
+            logger.warning("token count estimation failed, using character heuristic")
+            return max(1, len(text) // 4)
+
+    def _fast_token_count(self, text: str) -> int:
+        return max(1, len(text) // 4)
+
+    def _estimate_image_tokens(self, image_bytes: bytes | None) -> int:
+        if not image_bytes:
+            return 0
+        return IMAGE_TOKEN_ESTIMATE
+
+    def _compress_history(self, older_messages: list[types.Content], existing_summary: str = "") -> str:
+        texts = []
+        for msg in older_messages:
+            for part in msg.parts:
+                if part.text:
+                    texts.append(f"{msg.role}: {part.text}")
+
+        history_block = "\n\n".join(texts)
+
+        prompt = (
+            "You are a context compression engine. Summarize the following older conversation messages "
+            "concisely, preserving all important facts, user preferences, decisions, constraints, and context. "
+            "Be thorough but compact.\n\n"
+        )
+        if existing_summary:
+            prompt += f"Existing summary to extend:\n{existing_summary}\n\n"
+        prompt += f"New messages to compress:\n{history_block}\n\nUpdated summary:"
+
+        try:
+            response = self._client.models.generate_content(
+                model=SUMMARY_MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(temperature=0.1),
+            )
+            summary = response.text.strip()
+            return summary if summary else existing_summary or history_block[:2000]
+        except Exception as e:
+            logger.error("context summarization failed: %r", e)
+            return existing_summary or history_block[:2000]
+
+    def _manage_context_window(self, history: list[types.Content], cache_key: str, available_budget: int) -> list[types.Content]:
+        if not history:
+            return history
+
+        all_text = " ".join(
+            part.text for msg in history for part in msg.parts if part.text
+        )
+        total_tokens = self._count_tokens(all_text)
+
+        if total_tokens <= available_budget:
+            return history
+
+        logger.info(
+            "context window exceeded: %d tokens > %d available budget, compressing history",
+            total_tokens, available_budget,
+        )
+
+        recent_budget = int(available_budget * 0.4)
+        preserved = []
+        recent_tokens = 0
+        for msg in reversed(history):
+            msg_text = " ".join(part.text for part in msg.parts if part.text)
+            msg_tokens = self._fast_token_count(msg_text)
+            if recent_tokens + msg_tokens > recent_budget:
+                break
+            preserved.insert(0, msg)
+            recent_tokens += msg_tokens
+
+        older_messages = history[:-len(preserved)] if preserved else history
+
+        if not older_messages:
+            return history
+
+        existing_summary = _conversation_summaries.get(cache_key, "")
+        new_summary = self._compress_history(older_messages, existing_summary)
+        _conversation_summaries[cache_key] = new_summary
+
+        anchor = types.Content(
+            role="user",
+            parts=[types.Part(
+                text=(
+                    "[System context — summary of earlier conversation:]\n"
+                    f"{new_summary}\n\n"
+                    "[Resuming recent conversation below:]"
+                )
+            )],
+        )
+
+        return [anchor] + preserved
 
     def _generate_with_retry(self, **kwargs):
         max_retries = 3
@@ -88,12 +225,28 @@ class RAGPipeline:
 
     def _tool_search_documents(self, query: str) -> str:
         query_embedding = self.embedder.encode(query)
-        results = self.faiss_manager.search(query_embedding, top_k=3)
+        results = self.faiss_manager.search(query_embedding, query_text=query, top_k=3)
+        _log_document_search(self.user_id, query, results)
         if not results:
             return "No relevant documents found."
         return "\n\n".join(r["text"] for r in results)
 
-    def ask(self, question: str) -> ChatAnswer:
+    async def _build_history_contents(db, conversation_id: uuid.UUID) -> list[types.Content]:
+        messages = await get_messages(db, conversation_id)
+        history = []
+        for msg in messages:
+            role = "user" if msg.role == "user" else "model"
+            history.append(types.Content(role=role, parts=[types.Part(text=msg.text)]))
+        return history
+
+    def ask(
+        self,
+        question: str,
+        image_bytes: bytes | None = None,
+        image_mime_type: str = "image/jpeg",
+        history: list[types.Content] | None = None,
+        conversation_id: str | None = None,
+    ) -> ChatAnswer:
         start_time = time.monotonic()
         tool_call_counts: dict[str, int] = {}
         round_trips = 0
@@ -179,11 +332,28 @@ class RAGPipeline:
     call every available tool if the question doesn't require it.
 
     For casual conversation, greetings, or anything answerable directly, respond
-    without calling any tool."""
+    without calling any tool.
+    
+    CRITICAL INSTRUCTION FOR NUMERICAL DATA:
+- Search the provided context specifically for numerical figures, metrics, rates, dates, and amounts.
+- If a exact number, percentage, or currency figure exists in the context related to the user's question, you MUST explicitly include that exact number in your response.
+- Do NOT round, estimate, or omit specific digits provided in the source text.
+- If a number is requested but truly absent from context, state: "The document does not specify a value for [X]."""
 
-        contents = [
-            types.Content(role="user", parts=[types.Part(text=f"{system_prompt}\n\nQuestion: {question}")])
-        ]
+        parts = [types.Part(text=f"{system_prompt}\n\nQuestion: {question}")]
+        if image_bytes:
+            parts.append(types.Part.from_bytes(data=image_bytes, mime_type=image_mime_type))
+
+        cache_key = conversation_id or self.user_id
+        current_turn_text = f"{system_prompt}\n\nQuestion: {question}"
+        current_turn_tokens = self._count_tokens(current_turn_text)
+        image_tokens = self._estimate_image_tokens(image_bytes)
+
+        target_threshold = int(MAX_CONTEXT_WINDOW * CONTEXT_TARGET_RATIO)
+        available_budget = max(target_threshold - current_turn_tokens - image_tokens - TOOL_OUTPUT_BUFFER, 1000)
+
+        managed_history = self._manage_context_window(history or [], cache_key=cache_key, available_budget=available_budget)
+        contents = managed_history + [types.Content(role="user", parts=parts)]
 
         config = types.GenerateContentConfig(
             tools=tools if tools else None,

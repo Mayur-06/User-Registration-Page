@@ -5,6 +5,8 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Backgro
 from pydantic import BaseModel
 from app.rag.pipeline import RAGPipeline
 from app.rag.textchunker import TextChunker
+from fastapi import Form
+from google.genai import types
 
 from app.rag.embedder import Embedder
 from app.rag.generator import Generator
@@ -17,6 +19,9 @@ from app.memory.graph import fetch_memories, evaluate_and_save_memory
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.rag.supabase_document_store import SupabaseDocumentStore
 from app.memory.graph import fetch_memories
+from app.crud import get_messages
+from app.cloudinary_client import cloudinary
+import cloudinary.uploader
 
 router = APIRouter()
 
@@ -45,6 +50,13 @@ def get_rag_for_user(user_id: str) -> RAGPipeline:
         fetch_memories_fn=fetch_memories,
     )
 
+async def _build_history_contents(db: AsyncSession, conversation_id: uuid.UUID) -> list[types.Content]:
+    messages = await get_messages(db, conversation_id)
+    history = []
+    for msg in messages:
+        role = "user" if msg.role == "user" else "model"
+        history.append(types.Content(role=role, parts=[types.Part(text=msg.text)]))
+    return history
 
 class ChatRequestWithConvo(BaseModel):
     question: str
@@ -53,23 +65,59 @@ class ChatRequestWithConvo(BaseModel):
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
-    request: ChatRequestWithConvo,
     background_tasks: BackgroundTasks,
+    question: str = Form(...),
+    conversation_id: uuid.UUID = Form(...),
+    image: UploadFile | None = File(None),
     user_id: str = Depends(get_current_user_id),
     db: AsyncSession = Depends(get_db),
 ):
-    convo = await get_conversation(db, request.conversation_id, uuid.UUID(user_id))
+    convo = await get_conversation(db, conversation_id, uuid.UUID(user_id))
     if not convo:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
-    await add_message(db, request.conversation_id, "user", request.question)
-    #memories = fetch_memories(user_id, request.question)
+    image_bytes = None
+    image_url = None
+    image_mime_type = "image/jpeg"
+    if image is not None:
+        allowed_image_types = {"image/jpeg", "image/png", "image/webp"}
+        if image.content_type not in allowed_image_types:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported image type: {image.content_type}. Only JPG, PNG, and WEBP are supported.",
+            )
+        image_bytes = await image.read()
+        if len(image_bytes) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="Image must be under 5MB.")
+        image_mime_type = image.content_type
+
+        upload_result = cloudinary.uploader.upload(
+            image_bytes, folder=f"chat_images/{user_id}", resource_type="image",
+        )
+        image_url = upload_result["secure_url"]
+
+    history = await _build_history_contents(db, conversation_id)
+
+    await add_message(db, conversation_id, "user", question, image_url=image_url)
 
     rag = get_rag_for_user(user_id)
-    result = rag.ask(question=request.question)
 
-    await add_message(db, request.conversation_id, "bot", result.answer)
-    background_tasks.add_task(evaluate_and_save_memory, user_id, request.question)
+    result = rag.ask(
+        question=question,
+        image_bytes=image_bytes,
+        image_mime_type=image_mime_type,
+        history=history,
+        conversation_id=str(conversation_id),
+    )
+    
+    await add_message(db, conversation_id, "bot", result.answer)
+
+    memory_input = (f"{question}\n\n[Assistant's response, which may describe an uploaded image]: {result.answer}"
+    if image_bytes
+        else question)
+    
+    background_tasks.add_task(evaluate_and_save_memory, user_id, memory_input)
+
     return ChatResponse(answer=result.answer, sources_used=result.sources_used)
 
 @router.post("/documents/upload")

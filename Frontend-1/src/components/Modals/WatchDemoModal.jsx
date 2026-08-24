@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import {
   X,
   Play,
@@ -204,7 +205,9 @@ def parse_csv_stream(csv_path, json_path):
                     <span className="font-mono text-[10px] text-[#38bdf8]">Latency: 18ms</span>
                   </div>
 
-                  <p className="text-xs sm:text-sm leading-relaxed">{current.aiResponse}</p>
+                  <div className="text-xs sm:text-sm leading-relaxed prose prose-invert max-w-none">
+                    <ReactMarkdown>{current.aiResponse}</ReactMarkdown>
+                  </div>
 
                   {/* Bullet points if available */}
                   {current.bullets && (

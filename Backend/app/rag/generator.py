@@ -8,6 +8,9 @@ class Generator:
     def __init__(self):
         self.client = Gemini()
 
+    def count_tokens(self, text: str) -> int:
+        return self.client.count_tokens(text)
+
     def generate(
         self,
         system_prompt: str,

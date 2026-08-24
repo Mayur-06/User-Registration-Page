@@ -27,6 +27,16 @@ class Gemini:
 
         print(f"Gemini model loaded successfully! {model_name}")
 
+    def count_tokens(self, text: str) -> int:
+        try:
+            response = self.client.models.count_tokens(
+                model=self.model_name,
+                contents=text,
+            )
+            return getattr(response, "total_tokens", 0)
+        except Exception:
+            return max(1, len(text) // 4)
+
     def generate(
         self,
         system_prompt: str,

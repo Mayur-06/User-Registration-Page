@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import ReactMarkdown from 'react-markdown';
 import {
   Plus,
   History,
@@ -23,6 +24,7 @@ import {
   Database,
   User,
   Globe,
+  Image,
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { INITIAL_CONTEXT_FILES } from '../data/mockData';
@@ -52,6 +54,7 @@ export const ChatPage = ({
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [copiedMessageId, setCopiedMessageId] = useState(null);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+  const [pendingImage, setPendingImage] = useState(null); // { file, previewUrl } | null
 
   // Indexed Backend Documents State
   const [backendDocuments, setBackendDocuments] = useState([]);
@@ -66,6 +69,7 @@ export const ChatPage = ({
 
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const chatImageInputRef = useRef(null);
   const mainInputRef = useRef(null);
   const inFlight = useRef(new Set());
 
@@ -171,6 +175,7 @@ export const ChatPage = ({
         id: msg.id,
         sender: msg.role === 'user' ? 'user' : 'assistant',
         text: msg.text,
+        image_url: msg.image_url || null,
         timestamp: new Date(msg.created_at).toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit',
@@ -188,6 +193,8 @@ export const ChatPage = ({
     setMessages([]);
     setInputText('');
     setAttachedFiles([]);
+    if (pendingImage?.previewUrl) URL.revokeObjectURL(pendingImage.previewUrl);
+    setPendingImage(null);
     setActiveTab('chat');
     setTimeout(() => {
       mainInputRef.current?.focus();
@@ -244,6 +251,12 @@ export const ChatPage = ({
       return;
     }
 
+    const imageToSend = pendingImage?.file || null;
+    const imagePreviewUrl = pendingImage?.previewUrl || null;
+    setPendingImage(null);
+    setInputText('');
+    setIsTyping(true);
+
     let convoId = currentSessionId;
 
     // Create conversation on backend if not existing
@@ -263,16 +276,15 @@ export const ChatPage = ({
       id: `msg-${Date.now()}`,
       sender: 'user',
       text: textToSend,
+      image_url: imagePreviewUrl,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInputText('');
-    setIsTyping(true);
 
     try {
       // Send question and conversation ID to backend FastAPI RAG endpoint
-      const response = await api.chat.send(textToSend, convoId);
+      const response = await api.chat.send(textToSend, convoId, imageToSend);
 
       const assistantMessage = {
         id: `bot-${Date.now()}`,
@@ -294,6 +306,7 @@ export const ChatPage = ({
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsTyping(false);
+      setPendingImage(null);
     }
   };
 
@@ -325,7 +338,6 @@ export const ChatPage = ({
     }
 
     setUploadFeedback(null);
-    setIsTyping(true);
 
     try {
       const res = await api.documents.upload(file);
@@ -346,9 +358,38 @@ export const ChatPage = ({
         type: 'error',
         message: err.message || 'This document could not be processed. Please try another readable file.',
       });
-    } finally {
-      setIsTyping(false);
     }
+  };
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    chatImageInputRef.current.value = '';
+
+    if (pendingImage?.previewUrl) {
+      URL.revokeObjectURL(pendingImage.previewUrl);
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setUploadFeedback({
+        type: 'error',
+        message: 'Please select a JPG, PNG, or WEBP image.',
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadFeedback({
+        type: 'error',
+        message: 'Image must be under 5MB.',
+      });
+      return;
+    }
+
+    setUploadFeedback(null);
+    const previewUrl = URL.createObjectURL(file);
+    setPendingImage({ file, previewUrl });
   };
 
   const handleDragOver = (e) => {
@@ -394,6 +435,15 @@ export const ChatPage = ({
         onChange={handleFileUpload}
         className="hidden"
         accept=".pdf,.txt,.docx,.csv"
+      />
+
+      {/* Hidden Image Input */}
+      <input
+        type="file"
+        ref={chatImageInputRef}
+        onChange={handleImageSelect}
+        className="hidden"
+        accept="image/jpeg,image/png,image/webp"
       />
 
       {/* Mobile Backdrop */}
@@ -784,8 +834,18 @@ export const ChatPage = ({
                       </div>
                     )}
 
-                    <div className="text-xs sm:text-sm leading-relaxed whitespace-pre-line space-y-3 font-sans">
-                      {msg.text}
+                    {msg.sender === 'user' && msg.image_url && (
+                      <div className="mb-2">
+                        <img
+                          src={msg.image_url}
+                          alt="Attached"
+                          className="max-w-[200px] sm:max-w-[260px] rounded-xl border border-[#1e293b] object-cover"
+                        />
+                      </div>
+                    )}
+
+                    <div className="text-xs sm:text-sm leading-relaxed whitespace-pre-line space-y-3 font-sans prose prose-invert max-w-none">
+                      <ReactMarkdown>{msg.text}</ReactMarkdown>
                     </div>
 
                     {msg.sender === 'assistant' &&
@@ -875,6 +935,32 @@ export const ChatPage = ({
               </div>
             )}
 
+            {pendingImage && (
+              <div className="flex items-center gap-2 mb-2 px-1">
+                <div className="relative inline-block">
+                  <img
+                    src={pendingImage.previewUrl}
+                    alt="Preview"
+                    className="h-10 w-10 object-cover rounded-lg border border-[#1e293b]"
+                  />
+                </div>
+                <span className="text-[11px] text-[#94a3b8] font-mono truncate max-w-[120px]">
+                  {pendingImage.file.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (pendingImage.previewUrl) URL.revokeObjectURL(pendingImage.previewUrl);
+                    setPendingImage(null);
+                  }}
+                  className="text-[#94a3b8] hover:text-rose-400 cursor-pointer"
+                  title="Remove image"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -889,6 +975,15 @@ export const ChatPage = ({
                 title="Attach PDF or document to index into RAG"
               >
                 <Paperclip className="w-5 h-5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => chatImageInputRef.current?.click()}
+                className="p-2.5 rounded-xl text-[#94a3b8] hover:text-[#38bdf8] hover:bg-[#0e1928] transition-colors cursor-pointer"
+                title="Attach image to chat"
+              >
+                <Image className="w-5 h-5" />
               </button>
 
               <input

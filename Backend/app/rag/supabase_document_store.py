@@ -1,9 +1,4 @@
-"""Supabase-backed replacement for FAISSManager.
 
-Same public interface as the old FAISSManager (search, add_document,
-delete_document, list_documents), so pipeline.py and chat.py don't need
-to change beyond the single instantiation line in get_rag_for_user().
-"""
 
 import numpy as np
 
@@ -23,9 +18,39 @@ class SupabaseDocumentStore:
     # ---------------------------------------------------
     # Search
     # ---------------------------------------------------
-    def search(self, query_embedding, top_k=3):
+    def search(self, query_embedding, top_k=3, query_text=None):
         if isinstance(query_embedding, np.ndarray):
             query_embedding = query_embedding.tolist()
+
+        if query_text is not None:
+            response = (
+                self.client.rpc(
+                    "match_document_chunks_hybrid",
+                    {
+                        "query_embedding": query_embedding,
+                        "query_text": query_text,
+                        "match_count": top_k,
+                        "p_user_id": self.user_id,
+                    },
+                )
+                .limit(top_k)
+                .execute()
+            )
+
+            results = []
+            for idx, row in enumerate(response.data, start=1):
+                results.append(
+                    {
+                        "chunk_id": row["id"],
+                        "score": row["rrf_score"],
+                        "doc_id": row["doc_id"],
+                        "text": row["content"],
+                        "similarity": row.get("similarity"),
+                        "bm25_score": row.get("bm25_score"),
+                        "rank": idx,
+                    }
+                )
+            return results
 
         response = (
             self.client.rpc(
@@ -44,7 +69,7 @@ class SupabaseDocumentStore:
             results.append(
                 {
                     "chunk_id": row["id"],
-                    "score": row["similarity"],  # NOTE: higher = more similar (cosine), unlike old FAISS L2 distance
+                    "score": row["similarity"],
                     "doc_id": row["doc_id"],
                     "text": row["content"],
                 }

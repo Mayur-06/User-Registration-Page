@@ -490,7 +490,7 @@ export const AuthModal = ({
             {/* Password (for both login and signup) */}
             <div className="space-y-1">
               <label className="block text-[11px] font-mono text-[#94a3b8]">Password</label>
-              <div>
+              <div className="relative">
                 {/* <Lock className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" /> */}
                 <input
                   type={showPassword ? 'text' : 'password'}

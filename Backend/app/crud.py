@@ -92,8 +92,8 @@ async def delete_conversation(db: AsyncSession, convo: Conversation) -> None:
     await db.commit()
 
 
-async def add_message(db: AsyncSession, conversation_id: uuid.UUID, role: str, text: str) -> Message:
-    msg = Message(conversation_id=conversation_id, role=role, text=text)
+async def add_message(db: AsyncSession, conversation_id: uuid.UUID, role: str, text: str, image_url: str | None = None) -> Message:
+    msg = Message(conversation_id=conversation_id, role=role, text=text, image_url=image_url)
     db.add(msg)
     await db.commit()
     await db.refresh(msg)

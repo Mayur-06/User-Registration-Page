@@ -86,7 +86,13 @@ export default function LiquidEther({
         this.container = container;
         this.pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
         this.resize();
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        try {
+          this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        } catch(err){
+          console.warn('WebGL unavailable, skipping LiquidEther background effect:', err);
+          this.disabled = true;
+          return;
+        }
         this.renderer.autoClear = false;
         this.renderer.setClearColor(new THREE.Color(0x000000), 0);
         this.renderer.setPixelRatio(this.pixelRatio);
@@ -94,7 +100,7 @@ export default function LiquidEther({
         this.renderer.domElement.style.width = '100%';
         this.renderer.domElement.style.height = '100%';
         this.renderer.domElement.style.display = 'block';
-        this.timer = new THREE.Clock();
+        this.timer = new THREE.Timer();
       }
       resize() {
         if (!this.container) return;
