@@ -20,4 +20,6 @@ Backend/app/data/*.json
 Backend/app/memory/memory_eval_log.jsonl
 Backend/app/memory/memory_eval_log1.jsonl
 Backend/temp_uploads/
-Backend/app/rag/pipeline_usage_log.jsonl
+Backend/logs/
+Backend/documents/
+Backend/tests/

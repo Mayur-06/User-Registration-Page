@@ -1,6 +1,7 @@
 from pathlib import Path
 import uuid 
 import shutil
+import json
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, BackgroundTasks
 from pydantic import BaseModel
 from app.rag.pipeline import RAGPipeline
@@ -110,7 +111,15 @@ async def chat(
         conversation_id=str(conversation_id),
     )
     
-    await add_message(db, conversation_id, "bot", result.answer)
+    await add_message(
+        db,
+        conversation_id,
+        "bot",
+        result.answer,
+        sources_used=json.dumps(result.sources_used) if result.sources_used else None,
+        sources_called=json.dumps(result.sources_called) if result.sources_called else None,
+        sources_available=json.dumps(result.sources_available) if result.sources_available else None,
+    )
 
     memory_input = (f"{question}\n\n[Assistant's response, which may describe an uploaded image]: {result.answer}"
     if image_bytes
@@ -118,7 +127,7 @@ async def chat(
     
     background_tasks.add_task(evaluate_and_save_memory, user_id, memory_input)
 
-    return ChatResponse(answer=result.answer, sources_used=result.sources_used)
+    return ChatResponse(answer=result.answer, sources_used=result.sources_used, sources_called=result.sources_called, sources_available=result.sources_available)
 
 @router.post("/documents/upload")
 async def upload_document(file: UploadFile = File(...), user_id: str = Depends(get_current_user_id)):

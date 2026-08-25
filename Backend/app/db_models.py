@@ -68,4 +68,7 @@ class Message(Base):
     role: Mapped[str] = mapped_column(String(10), nullable=False)  # "user" or "bot"
     text: Mapped[str] = mapped_column(Text, nullable=False)
     image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sources_used: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sources_called: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sources_available: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -28,6 +28,8 @@ _conversation_summaries: dict[str, str] = {}
 class ChatAnswer(BaseModel):
     answer: str
     sources_used: list[str] = []
+    sources_called: list[str] = []
+    sources_available: list[str] = []
 
 def _log_pipeline_usage(
     user_id: str,
@@ -81,12 +83,6 @@ def _log_document_search(
             f.write(json.dumps(entry) + "\n")
     except Exception:
         logger.exception("failed to write document search log")       
-
-class ToolRelevance(BaseModel):
-    needs_memory: bool
-    needs_documents: bool
-    needs_web_search: bool
-
 
 class RAGPipeline:
 
@@ -217,19 +213,19 @@ class RAGPipeline:
             getattr(grounding, "grounding_chunks", None)
         ) 
 
-    def _tool_search_memories(self, query: str) -> str:
+    def _tool_search_memories(self, query: str) -> tuple[str, bool]:
         memories = self.fetch_memories_fn(self.user_id, query)
         if not memories:
-            return "No relevant memories found for this user."
-        return "\n".join(f"- {m}" for m in memories)
+            return "No relevant memories found for this user.", False
+        return "\n".join(f"- {m}" for m in memories), True
 
-    def _tool_search_documents(self, query: str) -> str:
+    def _tool_search_documents(self, query: str) -> tuple[str, bool]:
         query_embedding = self.embedder.encode(query)
-        results = self.faiss_manager.search(query_embedding, query_text=query, top_k=3)
+        results = self.faiss_manager.search(query_embedding, query_text=query, top_k=3, query_expansion=True)
         _log_document_search(self.user_id, query, results)
         if not results:
-            return "No relevant documents found."
-        return "\n\n".join(r["text"] for r in results)
+            return "No relevant documents found.", False
+        return "\n\n".join(r["text"] for r in results), True
 
     async def _build_history_contents(db, conversation_id: uuid.UUID) -> list[types.Content]:
         messages = await get_messages(db, conversation_id)
@@ -273,10 +269,11 @@ class RAGPipeline:
         search_documents_decl = types.FunctionDeclaration(
             name="search_documents",
             description=(
-                "Search documents this user has uploaded. Returns the top matching "
-                "chunks in a single call — do not call this tool more than once per "
-                "question. If the first result doesn't fully answer the question, "
-                "say so rather than retrying with a different query."
+                "Search through the user's uploaded files, historical attachments, "
+                "and custom knowledge base. Returns the top matching chunks in a "
+                "single call — do not call this tool more than once per question. "
+                "If the first result doesn't fully answer the question, say so "
+                "rather than retrying with a different query."
             ),
             parameters={
                 "type": "object",
@@ -285,56 +282,47 @@ class RAGPipeline:
             },
         )
 
-        try:
-            relevance_response = self._generate_with_retry(
-                model="gemini-3.6-flash",
-                contents=f"""Classify what kind of information this question needs.
+        has_documents = bool(self.faiss_manager.list_documents())
+        has_image = image_bytes is not None
 
-    Question: "{question}"
+        search_memories_available = True
+        search_documents_available = has_documents or has_image
+        web_search_available = True
 
-    needs_memory: does this need facts/preferences about the specific user
-    (their role, background, likes/dislikes, things they've told us before)?
-    needs_documents: does this need content from files the user has uploaded?
-    needs_web_search: does this need current, real-time, or internet information?
-
-    A question can need multiple, one, or none of these.""",
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=ToolRelevance,
-                    automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
-                ),
-            )
-            relevance: ToolRelevance = relevance_response.parsed
-        except Exception as e:
-            logger.warning("tool relevance classification failed for user %s: %r", self.user_id, e)
-            relevance = ToolRelevance(needs_memory=True, needs_documents=True, needs_web_search=True)
-
-        function_declarations = []
-        if relevance.needs_memory:
-            function_declarations.append(search_memories_decl)
-        if relevance.needs_documents:
+        function_declarations = [search_memories_decl]
+        if search_documents_available:
             function_declarations.append(search_documents_decl)
 
         tool_kwargs = {}
         if function_declarations:
             tool_kwargs["function_declarations"] = function_declarations
-        if relevance.needs_web_search:
-            tool_kwargs["google_search"] = types.GoogleSearch()
+        tool_kwargs["google_search"] = types.GoogleSearch()
 
         tools = [types.Tool(**tool_kwargs)] if tool_kwargs else []
 
-        system_prompt = """You are a helpful and conversational AI assistant.
+        document_hint = ""
+        if has_documents or has_image:
+            document_hint = (
+                "The user has uploaded files or attachments. "
+                "When presented with ambiguous queries, location identification, "
+                "or questions that may exist in personal notes or uploaded files, "
+                "query search_documents first before answering from general knowledge.\n"
+            )
 
-    You may have tools available: search_memories (facts about this specific
-    user), search_documents (content from files this user uploaded), and web
-    search. Only the tools relevant to this question have been made available
-    to you — call them if they help answer the question, but you don't need to
-    call every available tool if the question doesn't require it.
+        system_prompt = f"""You are a helpful and conversational AI assistant.
 
-    For casual conversation, greetings, or anything answerable directly, respond
-    without calling any tool.
-    
-    CRITICAL INSTRUCTION FOR NUMERICAL DATA:
+You have access to the following tools:
+- search_memories: facts and preferences about this specific user
+- search_documents: content from the user's uploaded files and knowledge base
+- web search: current, real-time, or internet information
+
+{document_hint}
+When presented with ambiguous user queries or location identification that may exist in personal notes or uploaded files, query search_documents first.
+
+For casual conversation, greetings, or anything answerable directly, respond
+without calling any tool.
+
+CRITICAL INSTRUCTION FOR NUMERICAL DATA:
 - Search the provided context specifically for numerical figures, metrics, rates, dates, and amounts.
 - If a exact number, percentage, or currency figure exists in the context related to the user's question, you MUST explicitly include that exact number in your response.
 - Do NOT round, estimate, or omit specific digits provided in the source text.
@@ -363,6 +351,7 @@ class RAGPipeline:
         )
 
         try:
+            tool_found_results: dict[str, bool] = {}
             for i in range(MAX_ROUND_TRIPS):
                 round_trips = i + 1
                 response = self._generate_with_retry(
@@ -379,13 +368,31 @@ class RAGPipeline:
                 ]
 
                 if not function_calls:
-                    sources = sorted(tool_call_counts.keys())
+                    sources_available = []
+                    if search_memories_available:
+                        sources_available.append("search_memories")
+                    if search_documents_available:
+                        sources_available.append("search_documents")
+                    if web_search_available:
+                        sources_available.append("google_search")
+
+                    sources_used = [
+                        src for src, found in tool_found_results.items() if found
+                    ]
                     if self._detect_web_search_used(candidate):
-                        sources.append("google_search")
+                        sources_used.append("google_search")
+                        tool_found_results["google_search"] = True
+
+                    sources_called = list(tool_call_counts.keys())
+                    if self._detect_web_search_used(candidate):
+                        sources_called.append("google_search")
+
                     return ChatAnswer(
-                    answer=response.text.strip(),
-                    sources_used=sources,
-                )
+                        answer=response.text.strip(),
+                        sources_used=sorted(set(sources_used)),
+                        sources_called=sorted(set(sources_called)),
+                        sources_available=sorted(sources_available),
+                    )
 
                 contents.append(candidate.content)
 
@@ -398,12 +405,16 @@ class RAGPipeline:
                             f"You've already called {fc.name} the maximum number of "
                             f"times for this question. Use the results you already have."
                         )
+                        tool_found_results[fc.name] = tool_found_results.get(fc.name, False)
                     elif fc.name == "search_memories":
-                        result = self._tool_search_memories(fc.args.get("query", question))
+                        result, found = self._tool_search_memories(fc.args.get("query", question))
+                        tool_found_results["search_memories"] = tool_found_results.get("search_memories", False) or found
                     elif fc.name == "search_documents":
-                        result = self._tool_search_documents(fc.args.get("query", question))
+                        result, found = self._tool_search_documents(fc.args.get("query", question))
+                        tool_found_results["search_documents"] = tool_found_results.get("search_documents", False) or found
                     else:
                         result = f"Unknown tool: {fc.name}"
+                        tool_found_results[fc.name] = tool_found_results.get(fc.name, False)
 
                     tool_response_parts.append(
                         types.Part(
@@ -418,10 +429,21 @@ class RAGPipeline:
                 contents.append(types.Content(role="user", parts=tool_response_parts))
 
             hit_cap = True
-            sources = sorted(tool_call_counts.keys())
+            sources_available = []
+            if search_memories_available:
+                sources_available.append("search_memories")
+            if search_documents_available:
+                sources_available.append("search_documents")
+            if web_search_available:
+                sources_available.append("google_search")
+
+            sources_used = [src for src, found in tool_found_results.items() if found]
+            sources_called = list(tool_call_counts.keys())
             return ChatAnswer(
                         answer="I wasn't able to complete that request — too many tool calls were needed.",
-                        sources_used=sources,
+                        sources_used=sorted(set(sources_used)),
+                        sources_called=sorted(set(sources_called)),
+                        sources_available=sorted(sources_available),
                     )
         finally:
             elapsed = time.monotonic() - start_time

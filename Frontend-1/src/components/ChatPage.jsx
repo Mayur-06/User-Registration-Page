@@ -176,6 +176,9 @@ export const ChatPage = ({
         sender: msg.role === 'user' ? 'user' : 'assistant',
         text: msg.text,
         image_url: msg.image_url || null,
+        sources_used: msg.sources_used ? JSON.parse(msg.sources_used) : [],
+        sources_called: msg.sources_called ? JSON.parse(msg.sources_called) : [],
+        sources_available: msg.sources_available ? JSON.parse(msg.sources_available) : [],
         timestamp: new Date(msg.created_at).toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit',
@@ -291,6 +294,8 @@ export const ChatPage = ({
         sender: 'assistant',
         text: response.answer || 'I could not generate an answer for this query.',
         sources_used: response.sources_used || [],
+        sources_called: response.sources_called || [],
+        sources_available: response.sources_available || [],
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
@@ -849,8 +854,8 @@ export const ChatPage = ({
                     </div>
 
                     {msg.sender === 'assistant' &&
-                      msg.sources_used &&
-                      msg.sources_used.length > 0 && (
+                      ((msg.sources_used && msg.sources_used.length > 0) ||
+                       (msg.sources_called && msg.sources_called.length > 0)) && (
                         <div className="flex flex-wrap gap-1.5 mt-3 pt-2.5 border-t border-[#1e293b]/60">
                           {msg.sources_used.includes('search_memories') && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0e1928] border border-[#1e293b] text-[10px] text-[#94a3b8]">
@@ -865,6 +870,21 @@ export const ChatPage = ({
                           {msg.sources_used.includes('google_search') && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0e1928] border border-[#1e293b] text-[10px] text-[#94a3b8]">
                               <Globe className="w-3 h-3" /> Web search
+                            </span>
+                          )}
+                          {msg.sources_called.includes('search_memories') && !msg.sources_used.includes('search_memories') && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#1e293b] text-[10px] text-[#64748b]">
+                              <User className="w-3 h-3" /> Memory checked
+                            </span>
+                          )}
+                          {msg.sources_called.includes('search_documents') && !msg.sources_used.includes('search_documents') && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#1e293b] text-[10px] text-[#64748b]">
+                              <FileText className="w-3 h-3" /> Documents checked
+                            </span>
+                          )}
+                          {msg.sources_called.includes('google_search') && !msg.sources_used.includes('google_search') && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#1e293b] text-[10px] text-[#64748b]">
+                              <Globe className="w-3 h-3" /> Web searched
                             </span>
                           )}
                         </div>

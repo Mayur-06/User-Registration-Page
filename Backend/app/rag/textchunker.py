@@ -1,4 +1,5 @@
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from app.rag.preprocessor import normalize_text
 
 class TextChunker:
     def __init__(self, chunk_size=500, chunk_overlap=75):
@@ -21,4 +22,4 @@ class TextChunker:
     )
 
     def chunk_text(self, text):
-        return self.text_splitter.split_text(text)
+        return [normalize_text(chunk) for chunk in self.text_splitter.split_text(text)]

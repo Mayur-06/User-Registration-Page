@@ -9,6 +9,8 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
     sources_used: list[str] = []
+    sources_called: list[str] = []
+    sources_available: list[str] = []
 
 
 class HealthResponse(BaseModel):

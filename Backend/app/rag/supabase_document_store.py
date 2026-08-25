@@ -1,8 +1,9 @@
 
-
+ 
 import numpy as np
 
 from app.supabase_client import get_service_client
+from app.rag.preprocessor import expand_query, normalize_text
 
 INSERT_CHUNK_SIZE = 500  # batch size for large document uploads
 
@@ -18,39 +19,50 @@ class SupabaseDocumentStore:
     # ---------------------------------------------------
     # Search
     # ---------------------------------------------------
-    def search(self, query_embedding, top_k=3, query_text=None):
+    def search(self, query_embedding, top_k=3, query_text=None, query_expansion=False):
         if isinstance(query_embedding, np.ndarray):
             query_embedding = query_embedding.tolist()
 
         if query_text is not None:
-            response = (
-                self.client.rpc(
-                    "match_document_chunks_hybrid",
-                    {
-                        "query_embedding": query_embedding,
-                        "query_text": query_text,
-                        "match_count": top_k,
-                        "p_user_id": self.user_id,
-                    },
-                )
-                .limit(top_k)
-                .execute()
-            )
+            variants = [query_text]
+            if query_expansion:
+                variants = expand_query(query_text)
 
-            results = []
-            for idx, row in enumerate(response.data, start=1):
-                results.append(
-                    {
-                        "chunk_id": row["id"],
-                        "score": row["rrf_score"],
-                        "doc_id": row["doc_id"],
-                        "text": row["content"],
-                        "similarity": row.get("similarity"),
-                        "bm25_score": row.get("bm25_score"),
-                        "rank": idx,
-                    }
+            seen: dict[str, dict] = {}
+            for variant in variants:
+                variant_embedding = self.embedder.encode(normalize_text(variant)).tolist()
+                response = (
+                    self.client.rpc(
+                        "match_document_chunks_hybrid",
+                        {
+                            "query_embedding": variant_embedding,
+                            "query_text": normalize_text(variant),
+                            "match_count": top_k * 2,
+                            "p_user_id": self.user_id,
+                        },
+                    )
+                    .limit(top_k * 2)
+                    .execute()
                 )
-            return results
+
+                for idx, row in enumerate(response.data, start=1):
+                    chunk_id = row["id"]
+                    score = row.get("rrf_score", 0)
+                    if chunk_id not in seen or score > seen[chunk_id]["score"]:
+                        seen[chunk_id] = {
+                            "chunk_id": chunk_id,
+                            "score": score,
+                            "doc_id": row["doc_id"],
+                            "text": row["content"],
+                            "similarity": row.get("similarity"),
+                            "bm25_score": row.get("bm25_score"),
+                            "rank": idx,
+                        }
+
+            merged = sorted(seen.values(), key=lambda x: x["score"], reverse=True)[:top_k]
+            for idx, item in enumerate(merged, start=1):
+                item["rank"] = idx
+            return merged
 
         response = (
             self.client.rpc(
