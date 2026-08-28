@@ -490,7 +490,7 @@ export const AuthModal = ({
             {/* Password (for both login and signup) */}
             <div className="space-y-1">
               <label className="block text-[11px] font-mono text-[#94a3b8]">Password</label>
-              <div>
+              <div className="relative">
                 {/* <Lock className="w-4 h-4 text-[#64748b] group-focus-within:text-[#38bdf8] absolute left-3.5 pointer-events-none transition-colors" /> */}
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -507,7 +507,7 @@ export const AuthModal = ({
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 text-[#64748b] hover:text-[#38bdf8] transition-colors p-1 cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748b] hover:text-[#38bdf8] transition-colors p-1 cursor-pointer"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

@@ -7,7 +7,6 @@ google-genai
 google-generativeai
 python-dotenv
 fastapi
-
 uvicorn
 python-multipart
 python-jose[cryptography]
@@ -24,7 +23,17 @@ supabase
 pydantic
 langchain-core
 pgvector
-langgraph 
-langchain-google-genai 
+sqlalchemy-paradedb
+langgraph
+langchain-google-genai
 langchain-community
 cloudinary
+Pillow
+spacy
+ragas
+pdfplumber
+groq
+anthropic
+numpy
+# Download spaCy model after install:
+# python -m spacy download en_core_web_sm

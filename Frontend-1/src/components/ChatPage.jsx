@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import MarkdownRenderer from './MarkdownRenderer';
 import {
   Plus,
   History,
@@ -21,6 +22,9 @@ import {
   Trash2,
   Loader2,
   Database,
+  User,
+  Globe,
+  Image,
 } from 'lucide-react';
 import { Logo } from './Logo';
 import { INITIAL_CONTEXT_FILES } from '../data/mockData';
@@ -50,6 +54,7 @@ export const ChatPage = ({
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [copiedMessageId, setCopiedMessageId] = useState(null);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+  const [pendingImage, setPendingImage] = useState(null); // { file, previewUrl } | null
 
   // Indexed Backend Documents State
   const [backendDocuments, setBackendDocuments] = useState([]);
@@ -64,6 +69,7 @@ export const ChatPage = ({
 
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const chatImageInputRef = useRef(null);
   const mainInputRef = useRef(null);
   const inFlight = useRef(new Set());
 
@@ -169,6 +175,10 @@ export const ChatPage = ({
         id: msg.id,
         sender: msg.role === 'user' ? 'user' : 'assistant',
         text: msg.text,
+        image_url: msg.image_url || null,
+        sources_used: msg.sources_used ? JSON.parse(msg.sources_used) : [],
+        sources_called: msg.sources_called ? JSON.parse(msg.sources_called) : [],
+        sources_available: msg.sources_available ? JSON.parse(msg.sources_available) : [],
         timestamp: new Date(msg.created_at).toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit',
@@ -186,6 +196,8 @@ export const ChatPage = ({
     setMessages([]);
     setInputText('');
     setAttachedFiles([]);
+    if (pendingImage?.previewUrl) URL.revokeObjectURL(pendingImage.previewUrl);
+    setPendingImage(null);
     setActiveTab('chat');
     setTimeout(() => {
       mainInputRef.current?.focus();
@@ -242,9 +254,14 @@ export const ChatPage = ({
       return;
     }
 
+    const imageToSend = pendingImage?.file || null;
+    const imagePreviewUrl = pendingImage?.previewUrl || null;
+    setPendingImage(null);
+    setInputText('');
+    setIsTyping(true);
+
     let convoId = currentSessionId;
 
-    // Create conversation on backend if not existing
     if (!convoId) {
       try {
         const titleSnippet = textToSend.slice(0, 35) + (textToSend.length > 35 ? '...' : '');
@@ -261,21 +278,22 @@ export const ChatPage = ({
       id: `msg-${Date.now()}`,
       sender: 'user',
       text: textToSend,
+      image_url: imagePreviewUrl,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInputText('');
-    setIsTyping(true);
 
     try {
-      // Send question and conversation ID to backend FastAPI RAG endpoint
-      const response = await api.chat.send(textToSend, convoId);
+      const response = await api.chat.send(textToSend, convoId, imageToSend);
 
       const assistantMessage = {
         id: `bot-${Date.now()}`,
         sender: 'assistant',
         text: response.answer || 'I could not generate an answer for this query.',
+        sources_used: response.sources_used || [],
+        sources_called: response.sources_called || [],
+        sources_available: response.sources_available || [],
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
@@ -291,13 +309,40 @@ export const ChatPage = ({
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsTyping(false);
+      setPendingImage(null);
     }
   };
 
   const handleCopy = (text, id) => {
-    navigator.clipboard.writeText(text);
-    setCopiedMessageId(id);
-    setTimeout(() => setCopiedMessageId(null), 2000);
+    if (!text) return;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopiedMessageId(id);
+        setTimeout(() => setCopiedMessageId(null), 2000);
+      }).catch(() => {
+        fallbackCopy(text, id);
+      });
+    } else {
+      fallbackCopy(text, id);
+    }
+  };
+
+  const fallbackCopy = (text, id) => {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      setCopiedMessageId(id);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch (err) {
+      console.error('Copy failed', err);
+    }
+    document.body.removeChild(textarea);
   };
 
   const handleFileUpload = async (e) => {
@@ -322,7 +367,6 @@ export const ChatPage = ({
     }
 
     setUploadFeedback(null);
-    setIsTyping(true);
 
     try {
       const res = await api.documents.upload(file);
@@ -343,9 +387,38 @@ export const ChatPage = ({
         type: 'error',
         message: err.message || 'This document could not be processed. Please try another readable file.',
       });
-    } finally {
-      setIsTyping(false);
     }
+  };
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    chatImageInputRef.current.value = '';
+
+    if (pendingImage?.previewUrl) {
+      URL.revokeObjectURL(pendingImage.previewUrl);
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setUploadFeedback({
+        type: 'error',
+        message: 'Please select a JPG, PNG, or WEBP image.',
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadFeedback({
+        type: 'error',
+        message: 'Image must be under 5MB.',
+      });
+      return;
+    }
+
+    setUploadFeedback(null);
+    const previewUrl = URL.createObjectURL(file);
+    setPendingImage({ file, previewUrl });
   };
 
   const handleDragOver = (e) => {
@@ -391,6 +464,15 @@ export const ChatPage = ({
         onChange={handleFileUpload}
         className="hidden"
         accept=".pdf,.txt,.docx,.csv"
+      />
+
+      {/* Hidden Image Input */}
+      <input
+        type="file"
+        ref={chatImageInputRef}
+        onChange={handleImageSelect}
+        className="hidden"
+        accept="image/jpeg,image/png,image/webp"
       />
 
       {/* Mobile Backdrop */}
@@ -467,7 +549,7 @@ export const ChatPage = ({
 
         {/* History Drawer */}
         {!sidebarCollapsed && activeTab === 'history' && (
-          <div className="flex-1 px-4 py-2 overflow-y-auto border-t border-b border-[#1e293b]">
+          <div className="flex-1 min-h-0 px-4 py-2 overflow-y-auto border-t border-b border-[#1e293b]">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wider font-mono">
                 History
@@ -494,7 +576,7 @@ export const ChatPage = ({
                 No conversations yet. Start a chat!
               </div>
             ) : (
-              <div className="space-y-1 pr-1 max-h-60 overflow-y-auto">
+              <div className="space-y-1 pr-1">
                 {filteredConversations.map((convo) => (
                   <div
                     key={convo.id}
@@ -768,6 +850,7 @@ export const ChatPage = ({
                           <span className="text-[10px] font-mono text-[#64748b]">{msg.timestamp}</span>
                         </div>
                         <button
+                          type="button"
                           onClick={() => handleCopy(msg.text, msg.id)}
                           className="p-1 rounded text-[#94a3b8] hover:text-[#38bdf8] hover:bg-[#0e1928] transition-colors cursor-pointer"
                           title="Copy text"
@@ -781,9 +864,56 @@ export const ChatPage = ({
                       </div>
                     )}
 
-                    <div className="text-xs sm:text-sm leading-relaxed whitespace-pre-line space-y-3 font-sans">
-                      {msg.text}
-                    </div>
+                    {msg.sender === 'user' && (
+                      <div className="flex items-center justify-end gap-2 mb-2.5 pb-2 border-b border-[#1e293b]">
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(msg.text, msg.id)}
+                          className="p-1 rounded text-[#94a3b8] hover:text-[#38bdf8] hover:bg-[#08101d] transition-colors cursor-pointer"
+                          title="Copy text"
+                        >
+                          {copiedMessageId === msg.id ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        <span className="text-[10px] font-mono text-[#64748b]">{msg.timestamp}</span>
+                      </div>
+                    )}
+
+                    {msg.sender === 'user' && msg.image_url && (
+                      <div className="mb-2">
+                        <img
+                          src={msg.image_url}
+                          alt="Attached"
+                          className="max-w-[200px] sm:max-w-[260px] rounded-xl border border-[#1e293b] object-cover"
+                        />
+                      </div>
+                    )}
+
+                    <MarkdownRenderer>{msg.text}</MarkdownRenderer>
+
+                    {msg.sender === 'assistant' &&
+                      (msg.sources_used && msg.sources_used.length > 0) && (
+                        <div className="flex flex-wrap gap-1.5 mt-3 pt-2.5 border-t border-[#1e293b]/60">
+                          {msg.sources_used.includes('search_memories') && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0e1928] border border-[#1e293b] text-[10px] text-[#94a3b8]">
+                              <User className="w-3 h-3" /> From memory
+                            </span>
+                          )}
+                          {msg.sources_used.includes('search_documents') && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0e1928] border border-[#1e293b] text-[10px] text-[#94a3b8]">
+                              <FileText className="w-3 h-3" /> From your documents
+                            </span>
+                          )}
+                          {msg.sources_used.includes('google_search') && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0e1928] border border-[#1e293b] text-[10px] text-[#94a3b8]">
+                              <Globe className="w-3 h-3" /> Web search
+                            </span>
+                          )}
+                        </div>
+                      )}
                   </div>
 
                   {msg.sender === 'user' && (
@@ -850,6 +980,32 @@ export const ChatPage = ({
               </div>
             )}
 
+            {pendingImage && (
+              <div className="flex items-center gap-2 mb-2 px-1">
+                <div className="relative inline-block">
+                  <img
+                    src={pendingImage.previewUrl}
+                    alt="Preview"
+                    className="h-10 w-10 object-cover rounded-lg border border-[#1e293b]"
+                  />
+                </div>
+                <span className="text-[11px] text-[#94a3b8] font-mono truncate max-w-[120px]">
+                  {pendingImage.file.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (pendingImage.previewUrl) URL.revokeObjectURL(pendingImage.previewUrl);
+                    setPendingImage(null);
+                  }}
+                  className="text-[#94a3b8] hover:text-rose-400 cursor-pointer"
+                  title="Remove image"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -864,6 +1020,15 @@ export const ChatPage = ({
                 title="Attach PDF or document to index into RAG"
               >
                 <Paperclip className="w-5 h-5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => chatImageInputRef.current?.click()}
+                className="p-2.5 rounded-xl text-[#94a3b8] hover:text-[#38bdf8] hover:bg-[#0e1928] transition-colors cursor-pointer"
+                title="Attach image to chat"
+              >
+                <Image className="w-5 h-5" />
               </button>
 
               <input

@@ -39,6 +39,10 @@ class MessageResponse(BaseModel):
     id: uuid.UUID
     role: str
     text: str
+    image_url: str | None = None
+    sources_used: str | None = None
+    sources_called: str | None = None
+    sources_available: str | None = None
     created_at: datetime
     model_config = {"from_attributes": True}
 

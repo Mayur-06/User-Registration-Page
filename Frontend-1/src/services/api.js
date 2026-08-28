@@ -252,13 +252,16 @@ export const api = {
 
   // RAG Chat
   chat: {
-    send: async (question, conversationId) => {
+    send: async (question, conversationId, imageFile = null) => {
+      const formData = new FormData();
+      formData.append('question', question);
+      formData.append('conversation_id', conversationId);
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
       return await request('/chat', {
         method: 'POST',
-        body: JSON.stringify({
-          question,
-          conversation_id: conversationId,
-        }),
+        body: formData,
       });
     },
   },

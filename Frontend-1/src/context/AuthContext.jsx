@@ -25,16 +25,9 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
           }
         } else {
-          try {
-            const refreshedUser = await api.auth.refresh();
-            if (refreshedUser) {
-              setUser(refreshedUser);
-            }
-          } catch (err) {
-            // Backend may be stopped while the frontend is still being used.
-            // This should not crash the app or block the UI.
-            setUser(null);
-          }
+          // No stored access token means no active session; skip silent refresh
+          // to avoid noisy 401s against /refresh for unauthenticated visitors.
+          setUser(null);
         }
       } finally {
         setLoading(false);
