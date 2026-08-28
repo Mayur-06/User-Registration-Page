@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import ReactMarkdown from 'react-markdown';
+import MarkdownRenderer from './MarkdownRenderer';
 import {
   Plus,
   History,
@@ -262,7 +262,6 @@ export const ChatPage = ({
 
     let convoId = currentSessionId;
 
-    // Create conversation on backend if not existing
     if (!convoId) {
       try {
         const titleSnippet = textToSend.slice(0, 35) + (textToSend.length > 35 ? '...' : '');
@@ -286,7 +285,6 @@ export const ChatPage = ({
     setMessages((prev) => [...prev, userMessage]);
 
     try {
-      // Send question and conversation ID to backend FastAPI RAG endpoint
       const response = await api.chat.send(textToSend, convoId, imageToSend);
 
       const assistantMessage = {
@@ -316,9 +314,35 @@ export const ChatPage = ({
   };
 
   const handleCopy = (text, id) => {
-    navigator.clipboard.writeText(text);
-    setCopiedMessageId(id);
-    setTimeout(() => setCopiedMessageId(null), 2000);
+    if (!text) return;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopiedMessageId(id);
+        setTimeout(() => setCopiedMessageId(null), 2000);
+      }).catch(() => {
+        fallbackCopy(text, id);
+      });
+    } else {
+      fallbackCopy(text, id);
+    }
+  };
+
+  const fallbackCopy = (text, id) => {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      setCopiedMessageId(id);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch (err) {
+      console.error('Copy failed', err);
+    }
+    document.body.removeChild(textarea);
   };
 
   const handleFileUpload = async (e) => {
@@ -525,7 +549,7 @@ export const ChatPage = ({
 
         {/* History Drawer */}
         {!sidebarCollapsed && activeTab === 'history' && (
-          <div className="flex-1 px-4 py-2 overflow-y-auto border-t border-b border-[#1e293b]">
+          <div className="flex-1 min-h-0 px-4 py-2 overflow-y-auto border-t border-b border-[#1e293b]">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wider font-mono">
                 History
@@ -552,7 +576,7 @@ export const ChatPage = ({
                 No conversations yet. Start a chat!
               </div>
             ) : (
-              <div className="space-y-1 pr-1 max-h-60 overflow-y-auto">
+              <div className="space-y-1 pr-1">
                 {filteredConversations.map((convo) => (
                   <div
                     key={convo.id}
@@ -826,6 +850,7 @@ export const ChatPage = ({
                           <span className="text-[10px] font-mono text-[#64748b]">{msg.timestamp}</span>
                         </div>
                         <button
+                          type="button"
                           onClick={() => handleCopy(msg.text, msg.id)}
                           className="p-1 rounded text-[#94a3b8] hover:text-[#38bdf8] hover:bg-[#0e1928] transition-colors cursor-pointer"
                           title="Copy text"
@@ -839,6 +864,24 @@ export const ChatPage = ({
                       </div>
                     )}
 
+                    {msg.sender === 'user' && (
+                      <div className="flex items-center justify-end gap-2 mb-2.5 pb-2 border-b border-[#1e293b]">
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(msg.text, msg.id)}
+                          className="p-1 rounded text-[#94a3b8] hover:text-[#38bdf8] hover:bg-[#08101d] transition-colors cursor-pointer"
+                          title="Copy text"
+                        >
+                          {copiedMessageId === msg.id ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        <span className="text-[10px] font-mono text-[#64748b]">{msg.timestamp}</span>
+                      </div>
+                    )}
+
                     {msg.sender === 'user' && msg.image_url && (
                       <div className="mb-2">
                         <img
@@ -849,13 +892,10 @@ export const ChatPage = ({
                       </div>
                     )}
 
-                    <div className="text-xs sm:text-sm leading-relaxed whitespace-pre-line space-y-3 font-sans prose prose-invert max-w-none">
-                      <ReactMarkdown>{msg.text}</ReactMarkdown>
-                    </div>
+                    <MarkdownRenderer>{msg.text}</MarkdownRenderer>
 
                     {msg.sender === 'assistant' &&
-                      ((msg.sources_used && msg.sources_used.length > 0) ||
-                       (msg.sources_called && msg.sources_called.length > 0)) && (
+                      (msg.sources_used && msg.sources_used.length > 0) && (
                         <div className="flex flex-wrap gap-1.5 mt-3 pt-2.5 border-t border-[#1e293b]/60">
                           {msg.sources_used.includes('search_memories') && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0e1928] border border-[#1e293b] text-[10px] text-[#94a3b8]">
@@ -870,21 +910,6 @@ export const ChatPage = ({
                           {msg.sources_used.includes('google_search') && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#0e1928] border border-[#1e293b] text-[10px] text-[#94a3b8]">
                               <Globe className="w-3 h-3" /> Web search
-                            </span>
-                          )}
-                          {msg.sources_called.includes('search_memories') && !msg.sources_used.includes('search_memories') && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#1e293b] text-[10px] text-[#64748b]">
-                              <User className="w-3 h-3" /> Memory checked
-                            </span>
-                          )}
-                          {msg.sources_called.includes('search_documents') && !msg.sources_used.includes('search_documents') && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#1e293b] text-[10px] text-[#64748b]">
-                              <FileText className="w-3 h-3" /> Documents checked
-                            </span>
-                          )}
-                          {msg.sources_called.includes('google_search') && !msg.sources_used.includes('google_search') && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-[#1e293b] text-[10px] text-[#64748b]">
-                              <Globe className="w-3 h-3" /> Web searched
                             </span>
                           )}
                         </div>

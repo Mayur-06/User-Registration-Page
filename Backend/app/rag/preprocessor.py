@@ -1,5 +1,5 @@
 import re
-
+import unicodedata
 
 _NUMBER_WORDS = {
     "zero": "0", "one": "1", "two": "2", "three": "3", "four": "4",
@@ -9,6 +9,11 @@ _NUMBER_WORDS = {
     "eighteen": "18", "nineteen": "19", "twenty": "20", "thirty": "30",
     "forty": "40", "fifty": "50", "sixty": "60", "seventy": "70",
     "eighty": "80", "ninety": "90", "hundred": "100", "thousand": "1000",
+}
+
+_LIGATURE_MAP = {
+    "\ufb00": "ff", "\ufb01": "fi", "\ufb02": "fl",
+    "\ufb03": "ffi", "\ufb04": "ffl",
 }
 
 _SUPERSCRIPT_MAP = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789")
@@ -67,21 +72,19 @@ def normalize_text(text: str) -> str:
     text = text.replace("µ", "u").replace("μ", "u")
     text = text.replace("–", "-").replace("—", "-")
     text = re.sub(r"(\d),(\d{3})", r"\1\2", text)
-    text = re.sub(r"(\w+)/(\w+)", r"\1 per \2", text)
+    # text = re.sub(r"(\w+)/(\w+)", r"\1 per \2", text)
     text = re.sub(r"(\d)([⁰¹²³⁴⁵⁶⁷⁸⁹])", r"\1^\2", text)
     text = text.translate(_SUPERSCRIPT_MAP)
     text = text.translate(_SUBSTRING_MAP)
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
-
-def expand_query(query: str) -> list[str]:
-    normalized = normalize_text(query)
-    variants = {normalized, query.lower()}
-
-    for match in re.finditer(r"\b\d+\b", normalized):
-        word_form = _digits_to_words(int(match.group(0)))
-        if word_form:
-            variants.add(normalized[:match.start()] + word_form + normalized[match.end():])
-
-    return list(variants)
+def normalize_for_matching(text: str) -> str:
+    text = text.lower()
+    for lig, expansion in _LIGATURE_MAP.items():
+        text = text.replace(lig, expansion)
+    text = unicodedata.normalize("NFKC", text)
+    text = text.replace("×", "x").replace("µ", "u").replace("μ", "u")
+    text = text.replace("–", "-").replace("—", "-")
+    text = re.sub(r"\s+", " ", text).strip()
+    return text

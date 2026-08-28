@@ -8,6 +8,7 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel
 import time as time_module
+import re
 from app.crud import get_messages
 
 
@@ -86,10 +87,9 @@ def _log_document_search(
 
 class RAGPipeline:
 
-    def __init__(self, embedder, faiss_manager, generator, chunker, user_id: str, fetch_memories_fn):
+    def __init__(self, embedder, faiss_manager, generator, user_id: str, fetch_memories_fn):
         self.embedder = embedder
         self.faiss_manager = faiss_manager
-        self.chunker = chunker
         self.generator = generator
         self.user_id = user_id
         self.fetch_memories_fn = fetch_memories_fn
@@ -219,13 +219,13 @@ class RAGPipeline:
             return "No relevant memories found for this user.", False
         return "\n".join(f"- {m}" for m in memories), True
 
-    def _tool_search_documents(self, query: str) -> tuple[str, bool]:
+    def _tool_search_documents(self, query: str) -> tuple[str, bool, int]:
         query_embedding = self.embedder.encode(query)
-        results = self.faiss_manager.search(query_embedding, query_text=query, top_k=3, query_expansion=True)
+        results = self.faiss_manager.search(query_embedding, query_text=query, top_k=3)
         _log_document_search(self.user_id, query, results)
         if not results:
-            return "No relevant documents found.", False
-        return "\n\n".join(r["text"] for r in results), True
+            return "No relevant documents found.", False, 0
+        return "\n\n".join(r["text"] for r in results), True, len(results)
 
     async def _build_history_contents(db, conversation_id: uuid.UUID) -> list[types.Content]:
         messages = await get_messages(db, conversation_id)
@@ -304,9 +304,12 @@ class RAGPipeline:
         if has_documents or has_image:
             document_hint = (
                 "The user has uploaded files or attachments. "
-                "When presented with ambiguous queries, location identification, "
-                "or questions that may exist in personal notes or uploaded files, "
-                "query search_documents first before answering from general knowledge.\n"
+                "Use search_documents ONLY when the question explicitly references "
+                "the user's own documents, uploaded files, notes, or personal context "
+                "(e.g., 'summarize my PDF', 'what did I write about X', 'check my notes'). "
+                "For general knowledge questions (e.g., 'list some reptiles', 'capital of France', "
+                "'how does photosynthesis work'), answer directly from your internal knowledge "
+                "and do NOT call search_documents.\n"
             )
 
         system_prompt = f"""You are a helpful and conversational AI assistant.
@@ -319,14 +322,31 @@ You have access to the following tools:
 {document_hint}
 When presented with ambiguous user queries or location identification that may exist in personal notes or uploaded files, query search_documents first.
 
-For casual conversation, greetings, or anything answerable directly, respond
-without calling any tool.
+STRICT TOOL-USE RULES:
+1. General-knowledge questions must NEVER call search_documents or web search. Answer directly from your internal knowledge.
+2. Use search_memories only when the question is about this specific user's preferences, facts, or history.
+3. Use search_documents ONLY when the question explicitly references the user's uploaded files, notes, or personal data.
+4. Use web search ONLY for current events, real-time data, or internet-specific information.
+5. If a question can be answered from general knowledge, respond directly without any tool call.
+
+For casual conversation, greetings, generic coding help, standard grammar corrections, or globally known public facts (e.g., "What is the capital of France?"), respond directly from your internal knowledge WITHOUT calling any tool.
+
 
 CRITICAL INSTRUCTION FOR NUMERICAL DATA:
 - Search the provided context specifically for numerical figures, metrics, rates, dates, and amounts.
 - If a exact number, percentage, or currency figure exists in the context related to the user's question, you MUST explicitly include that exact number in your response.
 - Do NOT round, estimate, or omit specific digits provided in the source text.
-- If a number is requested but truly absent from context, state: "The document does not specify a value for [X]."""
+- If a number is requested but truly absent from context, state: "The document does not specify a value for [X].
+
+Formatting rules for structured answers:
+- Use "###" for section headers when a response has multiple distinct sections, so
+  they render as visually distinct headings, not just bold text.
+- Always use proper Markdown bullet syntax ("- " or "* ") for lists — never bold text
+  followed by a colon as a pseudo-bullet.
+- Use nested bullets ("  - " with two-space indent) for sub-items under a parent point.
+- Use tables only for genuinely tabular/comparative numeric data, not for narrative lists.
+- Keep consecutive sections visually separated — a blank line between sections is fine,
+  a "###" header is better."""
 
         parts = [types.Part(text=f"{system_prompt}\n\nQuestion: {question}")]
         if image_bytes:
@@ -352,6 +372,7 @@ CRITICAL INSTRUCTION FOR NUMERICAL DATA:
 
         try:
             tool_found_results: dict[str, bool] = {}
+            tool_chunks_count: dict[str, int] = {}
             for i in range(MAX_ROUND_TRIPS):
                 round_trips = i + 1
                 response = self._generate_with_retry(
@@ -383,15 +404,22 @@ CRITICAL INSTRUCTION FOR NUMERICAL DATA:
                         sources_used.append("google_search")
                         tool_found_results["google_search"] = True
 
-                    sources_called = list(tool_call_counts.keys())
+                    sources_called = [
+                        src for src in tool_call_counts.keys()
+                        if tool_found_results.get(src, False)
+                    ]
                     if self._detect_web_search_used(candidate):
                         sources_called.append("google_search")
 
+                    answer_text = response.text.strip()
+                    if tool_chunks_count.get("search_documents"):
+                        answer_text += f"\n\n*Used {tool_chunks_count['search_documents']} document chunks for this answer.*"
+
                     return ChatAnswer(
-                        answer=response.text.strip(),
+                        answer=answer_text,
                         sources_used=sorted(set(sources_used)),
                         sources_called=sorted(set(sources_called)),
-                        sources_available=sorted(sources_available),
+                        sources_available=sorted(set(sources_available)),
                     )
 
                 contents.append(candidate.content)
@@ -410,8 +438,10 @@ CRITICAL INSTRUCTION FOR NUMERICAL DATA:
                         result, found = self._tool_search_memories(fc.args.get("query", question))
                         tool_found_results["search_memories"] = tool_found_results.get("search_memories", False) or found
                     elif fc.name == "search_documents":
-                        result, found = self._tool_search_documents(fc.args.get("query", question))
+                        result, found, chunks_count = self._tool_search_documents(fc.args.get("query", question))
                         tool_found_results["search_documents"] = tool_found_results.get("search_documents", False) or found
+                        if found and chunks_count > 0:
+                            tool_chunks_count["search_documents"] = tool_chunks_count.get("search_documents", 0) + chunks_count
                     else:
                         result = f"Unknown tool: {fc.name}"
                         tool_found_results[fc.name] = tool_found_results.get(fc.name, False)
@@ -438,12 +468,15 @@ CRITICAL INSTRUCTION FOR NUMERICAL DATA:
                 sources_available.append("google_search")
 
             sources_used = [src for src, found in tool_found_results.items() if found]
-            sources_called = list(tool_call_counts.keys())
+            sources_called = [
+                src for src in tool_call_counts.keys()
+                if tool_found_results.get(src, False)
+            ]
             return ChatAnswer(
                         answer="I wasn't able to complete that request — too many tool calls were needed.",
                         sources_used=sorted(set(sources_used)),
                         sources_called=sorted(set(sources_called)),
-                        sources_available=sorted(sources_available),
+                        sources_available=sorted(set(sources_available)),
                     )
         finally:
             elapsed = time.monotonic() - start_time
@@ -455,3 +488,4 @@ CRITICAL INSTRUCTION FOR NUMERICAL DATA:
                     "slow /chat response for user %s: %.2fs, %d round trips, tools=%s",
                     self.user_id, elapsed, round_trips, tool_call_counts,
                 )
+                

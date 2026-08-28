@@ -30,8 +30,6 @@ router = APIRouter()
 _shared = {}
 
 def get_shared_components():
-    if "chunker" not in _shared:
-        _shared["chunker"] = TextChunker()
     if "embedder" not in _shared:
         _shared["embedder"] = Embedder()
     if "generator" not in _shared:
@@ -43,7 +41,6 @@ def get_rag_for_user(user_id: str) -> RAGPipeline:
     shared = get_shared_components()
     faiss_manager = SupabaseDocumentStore(shared["embedder"], user_id=user_id)
     return RAGPipeline(
-        chunker=shared["chunker"],
         embedder=shared["embedder"],
         generator=shared["generator"],
         faiss_manager=faiss_manager,
@@ -129,6 +126,7 @@ async def chat(
 
     return ChatResponse(answer=result.answer, sources_used=result.sources_used, sources_called=result.sources_called, sources_available=result.sources_available)
 
+
 @router.post("/documents/upload")
 async def upload_document(file: UploadFile = File(...), user_id: str = Depends(get_current_user_id)):
     if not file.filename:
@@ -159,15 +157,14 @@ async def upload_document(file: UploadFile = File(...), user_id: str = Depends(g
         )
 
     rag = get_rag_for_user(user_id)
-    chunks = rag.chunker.chunk_text(document)
-    if not chunks:
+    if not document:
         raise HTTPException(
             status_code=400,
             detail="Could not extract any text from this document. It may be a scanned image or empty file.",
         )
-    rag.faiss_manager.add_document(file.filename, chunks)
+    chunks_added = rag.faiss_manager.add_document(file.filename, document)
 
-    return {"message": "Document uploaded successfully", "filename": file.filename, "chunks": len(chunks)}
+    return {"message": "Document uploaded successfully", "filename": file.filename, "chunks": chunks_added}
 
 
 @router.get("/documents")

@@ -66,16 +66,7 @@ def _log_eval_decision(
     except Exception:
         logger.exception("failed to write memory eval log")
 
-# _eval_llm: ChatGoogleGenerativeAI | None = None
 
-# def get_eval_llm() -> ChatGoogleGenerativeAI:
-#     global _eval_llm
-#     if _eval_llm is None:
-#         _eval_llm=ChatGoogleGenerativeAI(
-#             model="gemini-3.6-flash",
-#             google_api_key=_api_key()
-#         )
-#     return _eval_llm
 
 
 class LocalEmbeddingsAdapter(Embeddings):

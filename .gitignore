@@ -1,25 +1,29 @@
+# IDE
 .vscode/
 .DS_Store
 Thumbs.db
 
+# Python
 __pycache__/
 *.pyc
-indexes/
-documents/
-myvenv
-documents/
-indexes/
-terminal.log
-Backend/backend.log
-Backend/app/data/users.json
-__pycache__/
-*.pyc
-Backend/app/data/*.json
+myvenv/
 .pytest_cache/
-.env
-Backend/app/memory/memory_eval_log.jsonl
-Backend/app/memory/memory_eval_log1.jsonl
+
+# Backend
+Backend/.env
+Backend/backend.log
+Backend/app/data/*.json
+Backend/app/memory/memory_eval_log*.jsonl
 Backend/temp_uploads/
 Backend/logs/
 Backend/documents/
 Backend/tests/
+
+# Frontend
+Frontend-1/node_modules/
+Frontend-1/dist/
+Frontend-1/.env
+Frontend-1/bun.lock
+
+# Logs
+*.log
